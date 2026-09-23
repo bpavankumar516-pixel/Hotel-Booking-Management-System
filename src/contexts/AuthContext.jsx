@@ -3,18 +3,18 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext(null);
 
 const DEFAULT_ADMIN = {
-  id: 'usr_lodgify_01',
-  name: 'Jaylon Dorwart',
-  email: 'jaylon@lodgify.com',
+  id: 'usr_grand_horizon_01',
+  name: 'Pavan',
+  email: 'pavan@grandhorizon.com',
   role: 'Admin',
-  hotelName: 'Lodgify Hotel PMS',
+  hotelName: 'Grand Horizon Luxury Resort & Hotel',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-  phone: '+1 (555) 987-6543',
+  phone: '+91 98765 43210',
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('lodgify_hotel_user');
+    const savedUser = localStorage.getItem('grand_horizon_user');
     if (savedUser) {
       try {
         return JSON.parse(savedUser);
@@ -26,14 +26,14 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('lodgify_hotel_auth') === 'true' || true;
+    return localStorage.getItem('grand_horizon_auth') === 'true' || true;
   });
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('lodgify_hotel_user', JSON.stringify(user));
+      localStorage.setItem('grand_horizon_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('lodgify_hotel_user');
+      localStorage.removeItem('grand_horizon_user');
     }
   }, [user]);
 
@@ -45,13 +45,13 @@ export const AuthProvider = ({ children }) => {
     const loggedUser = {
       ...DEFAULT_ADMIN,
       email: email,
-      name: email.toLowerCase().includes('jaylon') ? 'Jaylon Dorwart' : email.split('@')[0],
+      name: email.toLowerCase().includes('pavan') ? 'Pavan' : (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)),
     };
 
     setUser(loggedUser);
     setIsAuthenticated(true);
     if (rememberMe) {
-      localStorage.setItem('lodgify_hotel_auth', 'true');
+      localStorage.setItem('grand_horizon_auth', 'true');
     }
     return loggedUser;
   };
@@ -59,16 +59,16 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     const newUser = {
       id: `usr_${Date.now()}`,
-      name: userData.name || 'Jaylon Dorwart',
+      name: userData.name || 'Pavan',
       email: userData.email,
       role: userData.role || 'Admin',
-      hotelName: userData.hotelName || 'Lodgify Hotel PMS',
+      hotelName: userData.hotelName || 'Grand Horizon Luxury Resort & Hotel',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
       phone: userData.phone || '',
     };
     setUser(newUser);
     setIsAuthenticated(true);
-    localStorage.setItem('lodgify_hotel_auth', 'true');
+    localStorage.setItem('grand_horizon_auth', 'true');
     return newUser;
   };
 
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = (updatedFields) => {
     setUser((prev) => {
       const updated = { ...prev, ...updatedFields };
-      localStorage.setItem('lodgify_hotel_user', JSON.stringify(updated));
+      localStorage.setItem('grand_horizon_user', JSON.stringify(updated));
       return updated;
     });
   };
@@ -95,8 +95,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('lodgify_hotel_auth');
-    localStorage.removeItem('lodgify_hotel_user');
+    localStorage.removeItem('grand_horizon_auth');
+    localStorage.removeItem('grand_horizon_user');
   };
 
   return (

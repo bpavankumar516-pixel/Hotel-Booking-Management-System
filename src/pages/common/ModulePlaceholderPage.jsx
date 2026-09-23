@@ -20,7 +20,7 @@ export const ModulePlaceholderPage = ({ title, moduleNumber, description }) => {
         </div>
 
         <div className="pt-4 inline-flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200/70 font-medium">
-          <span>Hodelz PMS Active Dashboard & System Architecture</span>
+          <span>Grand Horizon PMS Active Dashboard & System Architecture</span>
         </div>
       </div>
     </div>

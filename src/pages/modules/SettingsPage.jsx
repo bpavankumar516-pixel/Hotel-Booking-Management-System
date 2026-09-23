@@ -3,7 +3,7 @@ import { Settings, Save, Building, ShieldCheck, DollarSign, Bell } from 'lucide-
 
 export const SettingsPage = () => {
   const [settings, setSettings] = useState({
-    hotelName: 'Hodelz Hotel & Luxury Suites',
+    hotelName: 'Grand Horizon Luxury Resort & Hotel',
     address: '100 Ocean Boulevard, Suite 500, Miami Beach, FL',
     currency: 'USD ($)',
     taxRate: 12,

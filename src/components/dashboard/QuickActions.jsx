@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHotel } from '../../contexts/HotelContext';
+import { toast } from 'react-toastify';
 import { PlusCircle, UserPlus, BedDouble, LogIn, LogOut, CreditCard, X, Check } from 'lucide-react';
 
 export const QuickActions = () => {
@@ -58,13 +59,14 @@ export const QuickActions = () => {
     e.preventDefault();
     if (!bookingForm.guest) return;
     addBooking({
-      id: `LG-B${Math.floor(10000 + Math.random() * 90000)}`,
+      id: `GH-B${Math.floor(10000 + Math.random() * 90000)}`,
       guest: bookingForm.guest,
       room: bookingForm.room,
       checkIn: bookingForm.checkIn,
       status: 'Confirmed',
       amount: bookingForm.amount,
     });
+    toast.success(`New reservation created for ${bookingForm.guest}!`);
     closeModal();
     setBookingForm({ guest: '', room: 'Deluxe 101', checkIn: 'June 19, 2024', amount: '$535.50' });
   };
@@ -72,6 +74,7 @@ export const QuickActions = () => {
   const handleGuestSubmit = (e) => {
     e.preventDefault();
     addGuest();
+    toast.success(`Guest profile added successfully!`);
     closeModal();
     setGuestForm({ name: '', email: '', phone: '' });
   };
@@ -79,6 +82,7 @@ export const QuickActions = () => {
   const handleRoomSubmit = (e) => {
     e.preventDefault();
     addRoom();
+    toast.success(`New room inventory added!`);
     closeModal();
     setRoomForm({ roomNumber: '', type: 'Deluxe', price: '$150' });
   };
@@ -251,7 +255,7 @@ export const QuickActions = () => {
                   <Check className="w-6 h-6" />
                 </div>
                 <p className="text-xs text-slate-600">
-                  Hodelz PMS operation completed successfully!
+                  Grand Horizon PMS operation completed successfully!
                 </p>
                 <button
                   onClick={closeModal}

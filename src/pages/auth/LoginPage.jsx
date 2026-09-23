@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Grid3X3, Eye, EyeOff, UserCheck, ArrowRight, Sparkles, ShieldCheck, Star, Building2, Lock } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Grid3X3, Eye, EyeOff, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import {
   AUTH_BACKGROUND_IMAGE,
   BRAND_NAME,
   BRAND_SUBTITLE,
   GOLD_BUTTON_CLASS,
   LINK_ACCENT_CLASS,
-  CurvedWaveDivider,
+  OrganicWaveSvgDefs,
+  DecorativeBackgroundBlobs,
+  AuthImageQuoteOverlay,
   MobileWaveDivider,
 } from './AuthConstants';
 
@@ -16,8 +19,8 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('jaylon@lodgify.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('pavan@grandhorizon.com');
+  const [password, setPassword] = useState('pavan123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
@@ -30,9 +33,12 @@ export const LoginPage = () => {
 
     try {
       await login(email, password, rememberMe);
+      toast.success(`Welcome back, Pavan! Logged in successfully.`);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Invalid credentials. Please try again.');
+      const errMsg = err.message || 'Invalid credentials. Please try again.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -41,77 +47,46 @@ export const LoginPage = () => {
   const autoFillDemo = (demoEmail, demoPass) => {
     setEmail(demoEmail);
     setPassword(demoPass);
+    toast.info('Pavan Demo Credentials Loaded');
   };
 
   return (
-    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row">
-      {/* LEFT SIDE: Full-Height Edge-to-Edge Media Panel (Hodelz Theme) */}
-      <div className="w-full md:w-1/2 relative p-8 sm:p-12 md:p-16 flex flex-col justify-between text-white overflow-hidden bg-[#1E2B37] min-h-[420px] md:min-h-screen">
-        {/* Ocean Background Image with Sailboat silhouette & warm horizon glow */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-overlay transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
-        />
+    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row items-center justify-between">
+      {/* SVG ClipPath Definition & Decorative Background Blobs */}
+      <OrganicWaveSvgDefs />
+      <DecorativeBackgroundBlobs />
 
-        {/* Ambient Warm Gold & Deep Slate Radial Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1E2B37]/50 via-[#1E2B37]/75 to-[#17222C]/95" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(197,160,89,0.22),_transparent_55%)] pointer-events-none" />
-
-        {/* Top-Left Brand Logo: Circular icon + brand name */}
-        <div className="relative z-10 flex items-center space-x-3.5">
-          <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg shadow-[#C5A059]/20 border border-amber-300/60 ring-2 ring-amber-400/20">
-            <Grid3X3 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight">{BRAND_NAME}</span>
-            <span className="text-xs text-[#C5A059] tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
-          </div>
+      {/* TOP-LEFT BRAND LOGO */}
+      <div className="absolute top-6 left-6 sm:top-8 sm:left-10 z-30 flex items-center space-x-3.5">
+        <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg shadow-[#C5A059]/30 border border-amber-300/80 ring-2 ring-amber-400/30">
+          <Grid3X3 className="w-6 h-6" />
         </div>
-
-        {/* Overlaid Bottom-Left Heading + Glassmorphism Badge */}
-        <div className="relative z-10 space-y-5 mt-auto pt-12">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#C5A059]/25 border border-[#C5A059]/40 text-amber-200 text-xs font-bold backdrop-blur-md shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
-            <span>Enterprise Hotel PMS Platform</span>
-          </div>
-
-          <h1 className="font-['Poppins'] text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-            Let's go to<br />
-            <span className="bg-gradient-to-r from-[#D4AF37] via-[#E8C570] to-[#C5A059] bg-clip-text text-transparent">
-              a new journey
-            </span>
-          </h1>
-
-          {/* Glassmorphic Stats Strip */}
-          <div className="pt-2">
-            <div className="backdrop-blur-md bg-white/10 border border-white/15 rounded-2xl p-4 flex items-center justify-between shadow-xl max-w-sm">
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-[#C5A059]/30 text-[#C5A059] flex items-center justify-center border border-[#C5A059]/40">
-                  <Building2 className="w-5 h-5 text-amber-200" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-white flex items-center space-x-1">
-                    <span>500+ Luxury Properties</span>
-                  </div>
-                  <div className="text-[11px] text-slate-300 flex items-center space-x-1 mt-0.5">
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                    <span className="font-semibold text-amber-300">4.9 / 5.0</span>
-                    <span className="text-slate-400">• Verified Hospitality</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div>
+          <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight shadow-xs">{BRAND_NAME}</span>
+          <span className="text-xs text-amber-300 tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
         </div>
       </div>
 
-      {/* ORGANIC CURVED WAVE SVG DIVIDER */}
-      <CurvedWaveDivider />
+      {/* LEFT SIDE: 70% Screen Width Organic Wave Luxury Hotel Resort Image Panel */}
+      <div className="w-full md:w-[72%] lg:w-[70%] relative md:absolute inset-y-0 left-0 text-white overflow-hidden bg-[#1E2B37] min-h-[380px] md:min-h-screen shadow-2xl z-10 [clip-path:none] md:[clip-path:url(#referenceOrganicWaveClip)] transition-all duration-300">
+        {/* Vibrant Luxury Resort Pool & Hotel Architecture Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center brightness-105 saturate-[1.25] transition-transform duration-1000 hover:scale-105"
+          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
+        />
+
+        {/* Subtle Light Gradient Overlay (Preserving Vibrant Hotel Colors) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1E2B37]/50 via-transparent to-[#1E2B37]/45" />
+
+        {/* Simple Elegant Hotel Quote Overlay */}
+        <AuthImageQuoteOverlay />
+      </div>
+
       <MobileWaveDivider />
 
-      {/* RIGHT SIDE: White Panel with Centered Login Form */}
-      <div className="w-full md:w-1/2 relative z-10 p-8 sm:p-12 md:p-20 bg-gradient-to-br from-white via-slate-50/40 to-amber-50/15 flex flex-col justify-center items-center min-h-screen">
-        <div className="w-full max-w-md space-y-7 my-auto">
+      {/* RIGHT SIDE: Clean Flat Normal Login Form (No Card Box Wrapper) */}
+      <div className="w-full md:w-[34%] lg:w-[32%] ml-auto relative z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-center items-center min-h-screen md:pr-10 lg:pr-16">
+        <div className="w-full max-w-sm space-y-7 my-auto">
           {/* Small Centered Logo with Glowing Ring at Top */}
           <div className="flex justify-center mb-1">
             <div className="w-14 h-14 rounded-full bg-[#1E2B37] border-2 border-[#C5A059] text-[#C5A059] flex items-center justify-center shadow-[0_0_25px_rgba(197,160,89,0.35)] ring-4 ring-[#C5A059]/10 transition-transform duration-300 hover:scale-105">
@@ -145,11 +120,11 @@ export const LoginPage = () => {
             <div>
               <button
                 type="button"
-                onClick={() => autoFillDemo('jaylon@lodgify.com', 'password123')}
+                onClick={() => autoFillDemo('pavan@grandhorizon.com', 'pavan123')}
                 className="w-full py-2.5 px-3 rounded-xl bg-[#F7F2E7] hover:bg-amber-100/90 text-[#C5A059] font-extrabold text-xs border border-amber-300/70 transition-all duration-200 cursor-pointer text-center flex items-center justify-center space-x-1.5 shadow-2xs hover:shadow-xs active:scale-[0.98]"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059]" />
-                <span>Admin Demo Auto-Fill</span>
+                <span>Admin Demo Auto-Fill (Pavan)</span>
               </button>
             </div>
           </div>
@@ -164,7 +139,7 @@ export const LoginPage = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jaylon@lodgify.com"
+                placeholder="pavan@grandhorizon.com"
                 className="w-full py-3 border-b-2 border-slate-200 text-sm text-[#1E2B37] placeholder-slate-400 focus:outline-none focus:border-[#C5A059] transition-colors font-medium bg-transparent"
               />
             </div>

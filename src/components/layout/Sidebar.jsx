@@ -52,15 +52,15 @@ export const Sidebar = () => {
       <div className={`p-4 border-b border-slate-700/50 flex items-center min-h-[64px] ${isCollapsed ? 'justify-between px-3' : 'justify-between px-5'}`}>
         {!isCollapsed ? (
           <div className="flex items-center space-x-2">
-            <span className="font-['Poppins'] text-2xl font-extrabold tracking-tight text-white">
-              Hodelz
+            <span className="font-['Poppins'] text-lg font-extrabold tracking-tight text-white">
+              Grand Horizon
             </span>
-            <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-[#C5A059] text-slate-950 uppercase tracking-widest">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#C5A059] text-slate-950 uppercase tracking-widest">
               PMS
             </span>
           </div>
         ) : (
-          <div className="flex items-center justify-center p-1.5 rounded-lg bg-[#C5A059] text-slate-950 shadow-xs" title="Hodelz PMS">
+          <div className="flex items-center justify-center p-1.5 rounded-lg bg-[#C5A059] text-slate-950 shadow-xs" title="Grand Horizon PMS">
             <Grid3X3 className="w-4 h-4" />
           </div>
         )}

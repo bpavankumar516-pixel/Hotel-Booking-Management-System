@@ -43,7 +43,7 @@ export const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
         role: 'Admin', // Default Single Role
-        hotelName: 'Lodgify Hotel PMS', // Default Hotel System Name
+        hotelName: 'Grand Horizon Luxury Resort & Hotel', // Default Hotel System Name
       });
       navigate('/dashboard');
     } catch (err) {
@@ -63,7 +63,7 @@ export const RegisterPage = () => {
             </div>
           </div>
           <h2 className="font-['Poppins'] text-3xl font-bold tracking-tight text-[#1A1A1A]">Register Account</h2>
-          <p className="text-xs text-[#6B7280]">Join Lodgify Hotel Operations System</p>
+          <p className="text-xs text-[#6B7280]">Join Grand Horizon Hotel Operations System</p>
         </div>
 
         {error && (
@@ -81,7 +81,7 @@ export const RegisterPage = () => {
               required
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. Jaylon Dorwart"
+              placeholder="e.g. Pavan"
               className="w-full px-4 py-3 rounded-2xl bg-[#EAF0EC]/60 border border-slate-200 text-[#1A1A1A] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#D6E85A] focus:bg-white text-xs"
             />
           </div>
@@ -94,7 +94,7 @@ export const RegisterPage = () => {
               required
               value={formData.email}
               onChange={handleChange}
-              placeholder="jaylon@lodgify.com"
+              placeholder="pavan@hodelz.com"
               className="w-full px-4 py-3 rounded-2xl bg-[#EAF0EC]/60 border border-slate-200 text-[#1A1A1A] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#D6E85A] focus:bg-white text-xs"
             />
           </div>

@@ -3,9 +3,9 @@ import { CreditCard, Download, Search, Filter, Printer, FileText, CheckCircle2, 
 
 export const PaymentsPage = () => {
   const [payments, setPayments] = useState([
-    { id: 'INV-9021', bookingId: 'LG-B00109', guest: 'Mitchel Johnson', room: '# No.301', amount: 535.5, date: '2026-09-20', status: 'Paid', method: 'Credit Card' },
-    { id: 'INV-9022', bookingId: 'LG-B00105', guest: 'Robert Affleck', room: '# No.105', amount: 750.0, date: '2026-09-21', status: 'Paid', method: 'Debit Card' },
-    { id: 'INV-9023', bookingId: 'LG-B00102', guest: 'Chris Hemsworth', room: '# No.402', amount: 420.0, date: '2026-09-22', status: 'Pending', method: 'Cash' },
+    { id: 'INV-9021', bookingId: 'GH-B00109', guest: 'Mitchel Johnson', room: '# No.301', amount: 535.5, date: '2026-09-20', status: 'Paid', method: 'Credit Card' },
+    { id: 'INV-9022', bookingId: 'GH-B00105', guest: 'Robert Affleck', room: '# No.105', amount: 750.0, date: '2026-09-21', status: 'Paid', method: 'Debit Card' },
+    { id: 'INV-9023', bookingId: 'GH-B00102', guest: 'Chris Hemsworth', room: '# No.402', amount: 420.0, date: '2026-09-22', status: 'Pending', method: 'Cash' },
   ]);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,7 +136,7 @@ export const PaymentsPage = () => {
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4 text-xs">
               <div className="flex justify-between border-b border-slate-200 pb-2">
                 <div>
-                  <h4 className="font-['Poppins'] font-extrabold text-base text-[#1E2B37]">Hodelz PMS</h4>
+                  <h4 className="font-['Poppins'] font-extrabold text-base text-[#1E2B37]">Grand Horizon PMS</h4>
                   <p className="text-[10px] text-slate-500">Luxury Hospitality & Suites</p>
                 </div>
                 <div className="text-right">

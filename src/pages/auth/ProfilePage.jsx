@@ -5,11 +5,11 @@ import { Mail, Shield, Phone, Camera, Save, Check } from 'lucide-react';
 export const ProfilePage = () => {
   const { user, updateProfile } = useAuth();
   const [formData, setFormData] = useState({
-    name: user?.name || 'Jaylon Dorwart',
-    email: user?.email || 'jaylon@lodgify.com',
-    phone: user?.phone || '+1 (555) 987-6543',
+    name: user?.name || 'Pavan',
+    email: user?.email || 'pavan@grandhorizon.com',
+    phone: user?.phone || '+91 98765 43210',
     role: user?.role || 'Admin',
-    hotelName: user?.hotelName || 'Lodgify Hotel PMS',
+    hotelName: user?.hotelName || 'Grand Horizon Luxury Resort & Hotel',
     avatar: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
   });
 

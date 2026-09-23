@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Grid3X3, ArrowLeft, CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Grid3X3, ArrowLeft, CheckCircle2, ArrowRight } from 'lucide-react';
 import {
   AUTH_BACKGROUND_IMAGE,
   BRAND_NAME,
   BRAND_SUBTITLE,
   GOLD_BUTTON_CLASS,
-  CurvedWaveDivider,
+  OrganicWaveSvgDefs,
+  DecorativeBackgroundBlobs,
+  AuthImageQuoteOverlay,
   MobileWaveDivider,
 } from './AuthConstants';
 
@@ -26,57 +29,53 @@ export const ForgotPasswordPage = () => {
     try {
       await forgotPassword(email);
       setSubmitted(true);
+      toast.success(`Password reset instructions sent to ${email}`);
     } catch (err) {
-      setError(err.message || 'Something went wrong.');
+      const errMsg = err.message || 'Something went wrong.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row">
-      {/* LEFT SIDE: Full-Height Edge-to-Edge Media Panel (Hodelz Theme) */}
-      <div className="w-full md:w-1/2 relative p-8 sm:p-12 md:p-16 flex flex-col justify-between text-white overflow-hidden bg-[#1E2B37] min-h-[360px] md:min-h-screen">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-overlay transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
-        />
+    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row items-center justify-between">
+      {/* SVG ClipPath Definition & Decorative Background Blobs */}
+      <OrganicWaveSvgDefs />
+      <DecorativeBackgroundBlobs />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1E2B37]/40 via-[#1E2B37]/65 to-[#17222C]/95" />
-
-        {/* Top-Left Brand Logo */}
-        <div className="relative z-10 flex items-center space-x-3">
-          <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg border border-amber-300">
-            <Grid3X3 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight">{BRAND_NAME}</span>
-            <span className="text-xs text-[#C5A059] tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
-          </div>
+      {/* TOP-LEFT BRAND LOGO */}
+      <div className="absolute top-6 left-6 sm:top-8 sm:left-10 z-30 flex items-center space-x-3.5">
+        <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg shadow-[#C5A059]/30 border border-amber-300/80 ring-2 ring-amber-400/30">
+          <Grid3X3 className="w-6 h-6" />
         </div>
-
-        {/* Center Heading */}
-        <div className="relative z-10 space-y-3 mt-auto pt-12">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#C5A059]/20 border border-[#C5A059]/40 text-[#C5A059] text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Account Recovery Services</span>
-          </div>
-          <h1 className="font-['Poppins'] text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-            Reset Your<br /><span className="text-[#C5A059]">Password</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-200 max-w-sm font-medium">
-            We'll send password recovery instructions directly to your email address.
-          </p>
+        <div>
+          <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight shadow-xs">{BRAND_NAME}</span>
+          <span className="text-xs text-amber-300 tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
         </div>
       </div>
 
-      {/* ORGANIC CURVED WAVE SVG DIVIDER */}
-      <CurvedWaveDivider />
+      {/* LEFT SIDE: 70% Screen Width Organic Wave Luxury Hotel Resort Image Panel */}
+      <div className="w-full md:w-[72%] lg:w-[70%] relative md:absolute inset-y-0 left-0 text-white overflow-hidden bg-[#1E2B37] min-h-[380px] md:min-h-screen shadow-2xl z-10 [clip-path:none] md:[clip-path:url(#referenceOrganicWaveClip)] transition-all duration-300">
+        {/* Vibrant Luxury Resort Pool & Hotel Architecture Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center brightness-105 saturate-[1.25] transition-transform duration-1000 hover:scale-105"
+          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
+        />
+
+        {/* Subtle Light Gradient Overlay (Preserving Vibrant Hotel Colors) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1E2B37]/50 via-transparent to-[#1E2B37]/45" />
+
+        {/* Simple Elegant Hotel Quote Overlay */}
+        <AuthImageQuoteOverlay />
+      </div>
+
       <MobileWaveDivider />
 
-      {/* RIGHT SIDE: White Panel with Centered Form */}
-      <div className="w-full md:w-1/2 relative z-10 p-8 sm:p-12 md:p-20 bg-white flex flex-col justify-center items-center min-h-screen">
-        <div className="w-full max-w-md space-y-8 my-auto">
+      {/* RIGHT SIDE: Cardless Flat Clean Forgot Password Form */}
+      <div className="w-full md:w-[34%] lg:w-[32%] ml-auto relative z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-center items-center min-h-screen md:pr-10 lg:pr-16">
+        <div className="w-full max-w-sm space-y-8 my-auto">
           <Link to="/login" className="inline-flex items-center text-xs font-bold text-slate-500 hover:text-[#1E2B37] transition-colors">
             <ArrowLeft className="w-4 h-4 mr-1 text-[#C5A059]" /> Back to Login
           </Link>
@@ -118,7 +117,7 @@ export const ForgotPasswordPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jaylon@lodgify.com"
+                  placeholder="pavan@grandhorizon.com"
                   className="w-full py-3 border-b-2 border-slate-200 text-sm text-[#1E2B37] placeholder-slate-400 focus:outline-none focus:border-[#C5A059] transition-colors font-medium bg-transparent"
                 />
               </div>

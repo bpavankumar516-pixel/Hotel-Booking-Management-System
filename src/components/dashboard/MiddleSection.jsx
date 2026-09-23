@@ -96,11 +96,11 @@ export const MiddleSection = () => {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={bookingStatusChartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
               <defs>
-                <linearGradient id="hodelzGoldGrad" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="grandHorizonGoldGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#C5A059" stopOpacity={0.85} />
                   <stop offset="95%" stopColor="#C5A059" stopOpacity={0.15} />
                 </linearGradient>
-                <linearGradient id="hodelzNavyGrad" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="grandHorizonNavyGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#1E2B37" stopOpacity={0.9} />
                   <stop offset="95%" stopColor="#1E2B37" stopOpacity={0.25} />
                 </linearGradient>
@@ -117,8 +117,8 @@ export const MiddleSection = () => {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                 }}
               />
-              <Area type="monotone" dataKey="Bookings" stroke="#C5A059" strokeWidth={2} fillOpacity={1} fill="url(#hodelzGoldGrad)" />
-              <Area type="monotone" dataKey="Enquiries" stroke="#1E2B37" strokeWidth={2} fillOpacity={1} fill="url(#hodelzNavyGrad)" />
+              <Area type="monotone" dataKey="Bookings" stroke="#C5A059" strokeWidth={2} fillOpacity={1} fill="url(#grandHorizonGoldGrad)" />
+              <Area type="monotone" dataKey="Enquiries" stroke="#1E2B37" strokeWidth={2} fillOpacity={1} fill="url(#grandHorizonNavyGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

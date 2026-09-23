@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Grid3X3, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { Grid3X3, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import {
   AUTH_BACKGROUND_IMAGE,
   BRAND_NAME,
   BRAND_SUBTITLE,
   GOLD_BUTTON_CLASS,
   LINK_ACCENT_CLASS,
-  CurvedWaveDivider,
+  OrganicWaveSvgDefs,
+  DecorativeBackgroundBlobs,
+  AuthImageQuoteOverlay,
   MobileWaveDivider,
 } from './AuthConstants';
 
@@ -30,12 +33,16 @@ export const SignUpPage = () => {
     setError('');
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+      const msg = 'Password must be at least 6 characters long.';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter matching passwords.');
+      const msg = 'Passwords do not match. Please re-enter matching passwords.';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -46,57 +53,56 @@ export const SignUpPage = () => {
         email: email,
         password: password,
         role: 'Admin',
-        hotelName: 'Hodelz Hotel PMS',
+        hotelName: 'Grand Horizon Luxury Resort & Hotel',
       });
+      toast.success(`Account created successfully! Welcome to Grand Horizon, ${name}.`);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      const errMsg = err.message || 'Registration failed. Please try again.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row">
-      {/* LEFT SIDE: Full-Height Edge-to-Edge Media Panel (Hodelz Theme) */}
-      <div className="w-full md:w-1/2 relative p-8 sm:p-12 md:p-16 flex flex-col justify-between text-white overflow-hidden bg-[#1E2B37] min-h-[360px] md:min-h-screen">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-overlay transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
-        />
+    <div className="min-h-screen w-full bg-white font-sans overflow-x-hidden relative flex flex-col md:flex-row items-center justify-between">
+      {/* SVG ClipPath Definition & Decorative Background Blobs */}
+      <OrganicWaveSvgDefs />
+      <DecorativeBackgroundBlobs />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1E2B37]/40 via-[#1E2B37]/65 to-[#17222C]/95" />
-
-        {/* Top-Left Brand Logo */}
-        <div className="relative z-10 flex items-center space-x-3">
-          <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg border border-amber-300">
-            <Grid3X3 className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight">{BRAND_NAME}</span>
-            <span className="text-xs text-[#C5A059] tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
-          </div>
+      {/* TOP-LEFT BRAND LOGO */}
+      <div className="absolute top-6 left-6 sm:top-8 sm:left-10 z-30 flex items-center space-x-3.5">
+        <div className="w-11 h-11 rounded-full bg-[#C5A059] text-white flex items-center justify-center shadow-lg shadow-[#C5A059]/30 border border-amber-300/80 ring-2 ring-amber-400/30">
+          <Grid3X3 className="w-6 h-6" />
         </div>
-
-        {/* Overlaid Bottom-Left Heading */}
-        <div className="relative z-10 space-y-3 mt-auto pt-12">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#C5A059]/20 border border-[#C5A059]/40 text-[#C5A059] text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Join Hodelz Hotel PMS</span>
-          </div>
-          <h1 className="font-['Poppins'] text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-            Let's go to<br /><span className="text-[#C5A059]">a new journey</span>
-          </h1>
+        <div>
+          <span className="font-['Poppins'] text-xl font-extrabold tracking-tight text-white block leading-tight shadow-xs">{BRAND_NAME}</span>
+          <span className="text-xs text-amber-300 tracking-wider font-bold block leading-tight">{BRAND_SUBTITLE}</span>
         </div>
       </div>
 
-      {/* ORGANIC CURVED WAVE SVG DIVIDER */}
-      <CurvedWaveDivider />
+      {/* LEFT SIDE: 70% Screen Width Organic Wave Luxury Hotel Resort Image Panel */}
+      <div className="w-full md:w-[72%] lg:w-[70%] relative md:absolute inset-y-0 left-0 text-white overflow-hidden bg-[#1E2B37] min-h-[380px] md:min-h-screen shadow-2xl z-10 [clip-path:none] md:[clip-path:url(#referenceOrganicWaveClip)] transition-all duration-300">
+        {/* Vibrant Luxury Resort Pool & Hotel Architecture Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center brightness-105 saturate-[1.25] transition-transform duration-1000 hover:scale-105"
+          style={{ backgroundImage: `url('${AUTH_BACKGROUND_IMAGE}')` }}
+        />
+
+        {/* Subtle Light Gradient Overlay (Preserving Vibrant Hotel Colors) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1E2B37]/50 via-transparent to-[#1E2B37]/45" />
+
+        {/* Simple Elegant Hotel Quote Overlay */}
+        <AuthImageQuoteOverlay />
+      </div>
+
       <MobileWaveDivider />
 
-      {/* RIGHT SIDE: White Panel with Centered Form */}
-      <div className="w-full md:w-1/2 relative z-10 p-8 sm:p-12 md:p-20 bg-white flex flex-col justify-center items-center min-h-screen">
-        <div className="w-full max-w-md space-y-7 my-auto">
+      {/* RIGHT SIDE: Lightly Visible Soft Glassmorphic Sign Up Card */}
+      <div className="w-full md:w-[36%] lg:w-[34%] ml-auto relative z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-center items-center min-h-screen md:pr-10 lg:pr-16">
+        <div className="w-full max-w-md space-y-6 my-auto bg-white/75 backdrop-blur-md p-8 sm:p-9 rounded-3xl border border-white/80 shadow-xl shadow-slate-200/50">
           {/* Small Centered Logo at Top */}
           <div className="flex justify-center mb-1">
             <div className="w-14 h-14 rounded-full bg-[#1E2B37] border-2 border-[#C5A059] text-[#C5A059] flex items-center justify-center shadow-lg">
@@ -129,7 +135,7 @@ export const SignUpPage = () => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Jaylon Dorwart"
+                placeholder="Pavan"
                 className="w-full py-2.5 border-b-2 border-slate-200 text-sm text-[#1E2B37] placeholder-slate-400 focus:outline-none focus:border-[#C5A059] transition-colors font-medium bg-transparent"
               />
             </div>
@@ -142,7 +148,7 @@ export const SignUpPage = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jaylon@lodgify.com"
+                placeholder="pavan@grandhorizon.com"
                 className="w-full py-2.5 border-b-2 border-slate-200 text-sm text-[#1E2B37] placeholder-slate-400 focus:outline-none focus:border-[#C5A059] transition-colors font-medium bg-transparent"
               />
             </div>

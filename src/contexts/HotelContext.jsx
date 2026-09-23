@@ -142,14 +142,14 @@ export const HotelProvider = ({ children }) => {
   ]);
 
   const [recentBookings, setRecentBookings] = useState([
-    { id: 'LG-B00109', guest: 'Angus Copper', room: 'Deluxe 101', checkIn: 'June 19, 2024', checkOut: 'June 22, 2024', status: 'Deluxe', amount: '$535.50' },
-    { id: 'LG-B00105', guest: 'Catherine Ross', room: 'Suite 305', checkIn: 'March 20, 2028', checkOut: 'March 23, 2028', status: 'Suite', amount: '$750.00' },
-    { id: 'LG-B00102', guest: 'Edgar Irving', room: 'Standard 202', checkIn: 'June 19, 2028', checkOut: 'June 24, 2028', status: 'Pending', amount: '$420.00' },
+    { id: 'GH-B00109', guest: 'Angus Copper', room: 'Deluxe 101', checkIn: 'June 19, 2024', checkOut: 'June 22, 2024', status: 'Deluxe', amount: '$535.50' },
+    { id: 'GH-B00105', guest: 'Catherine Ross', room: 'Suite 305', checkIn: 'March 20, 2028', checkOut: 'March 23, 2028', status: 'Suite', amount: '$750.00' },
+    { id: 'GH-B00102', guest: 'Edgar Irving', room: 'Standard 202', checkIn: 'June 19, 2028', checkOut: 'June 24, 2028', status: 'Pending', amount: '$420.00' },
   ]);
 
   const [notifications] = useState([
     { id: 1, title: 'New Booking', desc: 'Angus Copper booked Deluxe 101', time: '10m ago', read: false },
-    { id: 2, title: 'Payment Confirmed', desc: '$535.50 received for LG-B00109', time: '25m ago', read: false },
+    { id: 2, title: 'Payment Confirmed', desc: '$535.50 received for GH-B00109', time: '25m ago', read: false },
     { id: 3, title: 'Housekeeping Alert', desc: 'Restock Housekeeping Supplies on 3rd Floor', time: '1h ago', read: false },
     { id: 4, title: 'Task Completed', desc: 'Room 204 cleaned & inspected', time: '2h ago', read: false },
   ]);

@@ -12,6 +12,10 @@ import { ProfilePage } from './pages/auth/ProfilePage';
 // Module 2: Dashboard Analytics Page (Full Rich Dashboard)
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 
+// Module 3 & 4: Active Full Pages
+import { RoomManagementPage } from './pages/modules/RoomManagementPage';
+import { GuestManagementPage } from './pages/modules/GuestManagementPage';
+
 // Common Minimal Placeholder Page for Remaining Sub-Pages
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
 
@@ -61,23 +65,25 @@ export const AppRoutes = () => {
       />
 
       {/* Remaining Sub-Pages rendered as Clean Minimal Placeholders */}
+      {/* Module 3: Active Room Management */}
       <Route
         path="/rooms"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Rooms & Suites" moduleNumber="03" description="Room list, third-party API integration, and room readiness." />
+              <RoomManagementPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
 
+      {/* Module 4: Active Guest Management (DummyJSON Users API) */}
       <Route
         path="/guests"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Guest Directory" moduleNumber="04" description="Guest profiles, contact info, and ID proof verification." />
+              <GuestManagementPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
