@@ -139,7 +139,7 @@ export const BookingHistoryPage = () => {
           className="py-2.5 px-4 rounded-xl bg-[#1E2B37] hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center space-x-2 cursor-pointer transition-colors shadow-md"
         >
           <CalendarDays className="w-4 h-4 text-[#C5A059]" />
-          <span>Go to Booking Engine</span>
+          <span>Go to Booking</span>
         </button>
       </div>
 

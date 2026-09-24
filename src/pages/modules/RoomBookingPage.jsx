@@ -23,6 +23,9 @@ import {
   ShieldCheck,
   Sparkles,
   ArrowRight,
+  Edit,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const RoomBookingPage = () => {
@@ -32,6 +35,8 @@ export const RoomBookingPage = () => {
     rooms,
     guests,
     addReservation,
+    updateReservation,
+    deleteReservation,
     checkInReservation,
     checkOutReservation,
     cancelReservation,
@@ -43,6 +48,9 @@ export const RoomBookingPage = () => {
 
   // Active Main View Tab: 'all' | 'arrivals' | 'departures' | 'in_history' | 'out_history'
   const [activeMainTab, setActiveMainTab] = useState('all');
+
+  const [editingRes, setEditingRes] = useState(null);
+  const [confirmDeleteRes, setConfirmDeleteRes] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [modalGuestSearch, setModalGuestSearch] = useState('');

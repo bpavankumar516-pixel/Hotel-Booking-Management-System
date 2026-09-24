@@ -318,9 +318,18 @@ export const HotelProvider = ({ children }) => {
   ]);
 
   const toggleTask = (taskId) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
-    );
+    setTasks((prev) => {
+      const updated = prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t));
+      const target = updated.find((t) => t.id === taskId);
+      if (target) {
+        addNotification({
+          title: 'Task Status Toggled',
+          text: `Task "${target.title}" marked as ${target.completed ? 'Completed' : 'Pending'}`,
+          category: 'maintenance',
+        });
+      }
+      return updated;
+    });
   };
 
   const addTask = (newTask) => {
@@ -335,11 +344,22 @@ export const HotelProvider = ({ children }) => {
       category: newTask.category || 'general',
     };
     setTasks((prev) => [taskObj, ...prev]);
+    addNotification({
+      title: 'Operational Task Created',
+      text: `New task: "${newTask.title}" (${newTask.category || 'General'})`,
+      category: 'maintenance',
+    });
     toast.success('Operational task added successfully!');
   };
 
   const deleteTask = (taskId) => {
+    const targetTask = tasks.find((t) => t.id === taskId);
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    addNotification({
+      title: 'Task Deleted',
+      text: `Removed operational task "${targetTask?.title || 'Task'}"`,
+      category: 'maintenance',
+    });
     toast.success('Task removed.');
   };
 
@@ -415,23 +435,53 @@ export const HotelProvider = ({ children }) => {
       ...roomData,
     };
     setRooms((prev) => [newRoom, ...prev]);
+    addNotification({
+      title: 'New Room Created',
+      text: `Added new room ${newRoom.number} (${newRoom.type}) to inventory`,
+      category: 'room',
+    });
     toast.success(`Created new room ${newRoom.number} (${newRoom.type}).`);
   };
 
   const updateRoom = (updatedRoom) => {
     setRooms((prev) => prev.map((r) => (r.id === updatedRoom.id ? updatedRoom : r)));
+    addNotification({
+      title: 'Room Details Updated',
+      text: `Updated specifications for room ${updatedRoom.number}`,
+      category: 'room',
+    });
     toast.info(`Updated room ${updatedRoom.number} details.`);
   };
 
   const deleteRoom = (id, number) => {
     setRooms((prev) => prev.filter((r) => r.id !== id));
+    addNotification({
+      title: 'Room Inventory Deleted',
+      text: `Removed room ${number} from inventory directory`,
+      category: 'room',
+    });
     toast.error(`Deleted room ${number} from inventory.`);
   };
 
   const updateRoomStatus = (numberOrId, newStatus) => {
+    const targetDigit = String(numberOrId || '').replace(/[^0-9]/g, '').trim();
     setRooms((prev) =>
-      prev.map((r) => (r.id === numberOrId || r.number === numberOrId ? { ...r, status: newStatus } : r))
+      prev.map((r) => {
+        const roomDigit = String(r.number || '').replace(/[^0-9]/g, '').trim();
+        const matches =
+          r.id === numberOrId ||
+          r.number === numberOrId ||
+          String(r.id) === String(numberOrId) ||
+          (targetDigit && roomDigit === targetDigit);
+
+        return matches ? { ...r, status: newStatus } : r;
+      })
     );
+    addNotification({
+      title: 'Room Status Change',
+      text: `Room ${numberOrId} status updated to "${newStatus}".`,
+      category: 'room',
+    });
   };
 
   // --- GUEST ACTIONS ---
@@ -441,16 +491,31 @@ export const HotelProvider = ({ children }) => {
       ...guestData,
     };
     setGuests((prev) => [newGuest, ...prev]);
+    addNotification({
+      title: 'New Guest Profile',
+      text: `Registered guest profile for ${newGuest.fullName}`,
+      category: 'reservation',
+    });
     toast.success(`Guest profile created for ${newGuest.fullName}.`);
   };
 
   const updateGuest = (updatedGuest) => {
     setGuests((prev) => prev.map((g) => (g.id === updatedGuest.id ? updatedGuest : g)));
+    addNotification({
+      title: 'Guest Profile Updated',
+      text: `Updated guest details for ${updatedGuest.fullName}`,
+      category: 'reservation',
+    });
     toast.info(`Updated profile for ${updatedGuest.fullName}.`);
   };
 
   const deleteGuest = (id, name) => {
     setGuests((prev) => prev.filter((g) => g.id !== id));
+    addNotification({
+      title: 'Guest Removed',
+      text: `Removed ${name} from guest directory`,
+      category: 'reservation',
+    });
     toast.error(`Removed ${name} from guest directory.`);
   };
 
@@ -474,7 +539,39 @@ export const HotelProvider = ({ children }) => {
       )
     );
 
+    addNotification({
+      title: 'New Booking Created',
+      text: `Reservation ${newRes.id} created for ${newRes.guestName} in ${newRes.roomNumber}`,
+      category: 'reservation',
+    });
+
     toast.success(`Reservation ${newRes.id} created for ${newRes.guestName}! Room ${newRes.roomNumber} updated.`);
+  };
+
+  const updateReservation = (updatedRes) => {
+    setReservations((prev) =>
+      prev.map((r) => (r.id === updatedRes.id ? { ...r, ...updatedRes } : r))
+    );
+    addNotification({
+      title: 'Reservation Updated',
+      text: `Updated reservation details for ${updatedRes.id} (${updatedRes.guestName})`,
+      category: 'reservation',
+    });
+    toast.info(`Updated reservation ${updatedRes.id}.`);
+  };
+
+  const deleteReservation = (resId) => {
+    const targetRes = reservations.find((r) => r.id === resId);
+    if (targetRes) {
+      updateRoomStatus(targetRes.roomNumber, 'Available');
+    }
+    setReservations((prev) => prev.filter((r) => r.id !== resId));
+    addNotification({
+      title: 'Reservation Deleted',
+      text: `Deleted reservation ${resId}. Room ${targetRes?.roomNumber || ''} freed.`,
+      category: 'reservation',
+    });
+    toast.error(`Deleted reservation ${resId}.`);
   };
 
   // 5. Module 06: Central Check-In & Check-Out History Logs
@@ -626,6 +723,12 @@ export const HotelProvider = ({ children }) => {
 
     setCheckInLogs((prev) => [newLog, ...prev]);
 
+    addNotification({
+      title: 'Guest Checked-In',
+      text: `Guest ${targetRes.guestName} checked in to ${targetRes.roomNumber} (Keycard ${generatedKeyCard})`,
+      category: 'checkout',
+    });
+
     toast.success(`Guest ${targetRes.guestName} checked in to ${targetRes.roomNumber}! Key card ${generatedKeyCard} issued.`);
   };
 
@@ -659,6 +762,12 @@ export const HotelProvider = ({ children }) => {
     };
 
     setCheckOutLogs((prev) => [newLog, ...prev]);
+
+    addNotification({
+      title: 'Express Check-Out',
+      text: `Check-out processed for ${targetRes.guestName} (${targetRes.roomNumber} - Folio $${targetRes.totalAmount})`,
+      category: 'checkout',
+    });
 
     toast.info(`Guest ${targetRes.guestName} checked out. Room ${targetRes.roomNumber} marked Available.`);
   };
@@ -703,6 +812,12 @@ export const HotelProvider = ({ children }) => {
 
     updateRoomStatus(targetRes.roomNumber, 'Available');
 
+    addNotification({
+      title: 'Reservation Cancelled',
+      text: `Reservation ${resId} cancelled for ${targetRes.guestName}. Room ${targetRes.roomNumber} freed.`,
+      category: 'reservation',
+    });
+
     toast.error(`Reservation ${resId} cancelled. Room ${targetRes.roomNumber} freed.`);
   };
 
@@ -710,6 +825,13 @@ export const HotelProvider = ({ children }) => {
     setReservations((prev) =>
       prev.map((r) => (r.id === resId ? { ...r, paymentStatus: newPaymentStatus } : r))
     );
+
+    addNotification({
+      title: 'Payment Status Updated',
+      text: `Payment status for ${resId} updated to "${newPaymentStatus}".`,
+      category: 'checkout',
+    });
+
     toast.success(`Payment status for ${resId} updated to "${newPaymentStatus}".`);
   };
 
@@ -789,11 +911,47 @@ export const HotelProvider = ({ children }) => {
     { name: 'Agoda', value: 9, color: '#10B981' },
   ];
 
-  const notifications = [
-    { id: 1, text: 'New reservation RES-9014 created by Sarah Wilson', read: false, time: '10 mins ago' },
-    { id: 2, text: 'Room # No.102 marked as Occupied', read: false, time: '25 mins ago' },
-    { id: 3, text: 'Express check-out processed for Alexander Wright', read: true, time: '1 hour ago' },
-  ];
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('grand_horizon_notifications');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          { id: 1, title: 'New Reservation', text: 'Reservation RES-9014 created for Sophia Brown', read: false, time: '10 mins ago', category: 'reservation' },
+          { id: 2, title: 'Room Occupied', text: 'Room # No.102 marked as Occupied (Michael Williams)', read: false, time: '25 mins ago', category: 'room' },
+          { id: 3, title: 'Express Check-Out', text: 'Check-out processed for James Miller (Folio $285)', read: false, time: '1 hour ago', category: 'checkout' },
+          { id: 4, title: 'Maintenance Notice', text: 'Deep sanitization requested for Room # No.302', read: true, time: '2 hours ago', category: 'maintenance' },
+        ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('grand_horizon_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const addNotification = (notifData) => {
+    const notif = {
+      id: Date.now(),
+      title: notifData.title || 'System Alert',
+      text: notifData.text,
+      read: false,
+      time: 'Just now',
+      category: notifData.category || 'general',
+    };
+    setNotifications((prev) => [notif, ...prev]);
+  };
+
+  const markNotificationAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  };
 
   return (
     <HotelContext.Provider
@@ -811,6 +969,10 @@ export const HotelProvider = ({ children }) => {
         recentEnquiries,
         bookingStatusChartData,
         notifications,
+        addNotification,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        clearNotifications,
         availableRoomsList,
         recentReservationsList: reservations.slice(0, 5),
         checkInLogs,
@@ -826,6 +988,8 @@ export const HotelProvider = ({ children }) => {
         deleteGuest,
         reloadDummyGuests,
         addReservation,
+        updateReservation,
+        deleteReservation,
         checkInReservation,
         checkOutReservation,
         cancelReservation,

@@ -20,13 +20,26 @@ import {
   User,
   ShieldCheck,
   Check,
+  Edit,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useHotel } from '../../contexts/HotelContext';
 import { toast } from 'react-toastify';
 
 export const PaymentsPage = () => {
   const navigate = useNavigate();
-  const { reservations = [], guests = [], updatePaymentStatus, addReservation } = useHotel();
+  const {
+    reservations = [],
+    guests = [],
+    rooms = [],
+    updatePaymentStatus,
+    addReservation,
+    updateReservation,
+    deleteReservation,
+  } = useHotel();
+
+  const availableRooms = rooms.filter((r) => r.status === 'Available');
 
   // Map Reservations into rich Payment Records
   const payments = reservations.map((r, idx) => {
@@ -64,6 +77,25 @@ export const PaymentsPage = () => {
   const [filterDateRange, setFilterDateRange] = useState('All Time');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [confirmDeletePayment, setConfirmDeletePayment] = useState(null);
+
+  // Searchable Guest Selection Modal State
+  const [modalGuestSearch, setModalGuestSearch] = useState('');
+  const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const [isGuestSelected, setIsGuestSelected] = useState(false);
+
+  // Filtered guests for modal search dropdown
+  const modalFilteredGuests = guests.filter((g) => {
+    const q = modalGuestSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      g.fullName.toLowerCase().includes(q) ||
+      g.email.toLowerCase().includes(q) ||
+      g.mobile.includes(q) ||
+      (g.idProof && g.idProof.toLowerCase().includes(q))
+    );
+  });
 
   // New Payment Form State
   const [newPayment, setNewPayment] = useState({
@@ -207,7 +239,21 @@ export const PaymentsPage = () => {
             <span>Export CSV</span>
           </button>
           <button
-            onClick={() => setShowAddPaymentModal(true)}
+            onClick={() => {
+              const firstAvail = availableRooms[0];
+              setModalGuestSearch('');
+              setIsGuestSelected(false);
+              setIsGuestDropdownOpen(false);
+              setNewPayment({
+                guestName: '',
+                guestEmail: '',
+                roomNumber: firstAvail?.number || '# No.101',
+                amount: '',
+                method: 'Credit Card',
+                status: 'Paid',
+              });
+              setShowAddPaymentModal(true);
+            }}
             className="py-2.5 px-4 rounded-xl bg-[#C5A059] hover:bg-[#b08d48] text-white font-bold text-xs inline-flex items-center space-x-2 cursor-pointer transition-colors shadow-md shadow-amber-600/20"
           >
             <Plus className="w-4 h-4" />
@@ -432,14 +478,31 @@ export const PaymentsPage = () => {
                       <option value="Refunded">REFUNDED</option>
                     </select>
                   </td>
-                  <td className="py-4 px-4 text-right space-x-2">
-                    <button
-                      onClick={() => navigate(`/payments/invoice/${p.id}`)}
-                      className="py-1.5 px-3 rounded-lg bg-[#1E2B37] hover:bg-slate-800 text-white font-bold text-[11px] inline-flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-[#C5A059]" />
-                      <span>Invoice</span>
-                    </button>
+                  <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end space-x-1.5">
+                      <button
+                        onClick={() => navigate(`/payments/invoice/${p.id}`)}
+                        className="py-1.5 px-2.5 rounded-lg bg-[#1E2B37] hover:bg-slate-800 text-white font-bold text-[11px] inline-flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
+                        title="View Invoice Sheet"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-[#C5A059]" />
+                        <span>Invoice</span>
+                      </button>
+                      <button
+                        onClick={() => setEditingPayment({ ...p })}
+                        className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                        title="Edit Payment Record"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeletePayment(p)}
+                        className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete Payment Record"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -619,16 +682,154 @@ export const PaymentsPage = () => {
             </div>
 
             <form onSubmit={handleCreatePaymentSubmit} className="space-y-3.5 text-xs">
+              {/* User-Friendly Searchable Guest Selection */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Guest Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newPayment.guestName}
-                  onChange={(e) => setNewPayment({ ...newPayment, guestName: e.target.value })}
-                  placeholder="e.g. Robert Vance"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
-                />
+                <label className="block text-[11px] font-extrabold text-slate-700 mb-1">
+                  Select Registered Guest Profile *
+                </label>
+
+                {isGuestSelected && newPayment.guestName ? (
+                  /* Selected Guest Card Display */
+                  <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/80 flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={
+                          guests.find((g) => g.fullName.toLowerCase() === newPayment.guestName.toLowerCase())?.avatar ||
+                          'https://dummyjson.com/icon/emilyj/128'
+                        }
+                        alt={newPayment.guestName}
+                        className="w-9 h-9 rounded-full object-cover border border-[#C5A059] shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <span className="font-['Poppins'] font-extrabold text-xs text-[#1E2B37] block leading-tight truncate">
+                          {newPayment.guestName}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono block leading-tight truncate">
+                          {newPayment.guestEmail || 'Registered Guest'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsGuestSelected(false);
+                        setModalGuestSearch('');
+                        setIsGuestDropdownOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-[10px] border border-slate-200 transition-colors cursor-pointer shrink-0"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  /* Interactive Search Input & Dropdown Menu */
+                  <div className="relative">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={modalGuestSearch}
+                        onFocus={() => setIsGuestDropdownOpen(true)}
+                        onChange={(e) => {
+                          setModalGuestSearch(e.target.value);
+                          setIsGuestDropdownOpen(true);
+                        }}
+                        placeholder="Type guest name, email, or mobile number..."
+                        className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-slate-50 border-2 border-[#C5A059]/60 text-xs text-[#1E2B37] focus:outline-none focus:border-[#C5A059] font-semibold shadow-xs"
+                      />
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#C5A059]" />
+                      {modalGuestSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setModalGuestSearch('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {isGuestDropdownOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs">
+                        <div className="p-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 backdrop-blur-xs">
+                          <span>Matching Registered Guest Directory</span>
+                          <span>{modalFilteredGuests.length} Results</span>
+                        </div>
+
+                        {modalFilteredGuests.length === 0 ? (
+                          <div className="p-4 text-center space-y-2">
+                            <p className="text-slate-500 font-medium text-xs">
+                              No registered guest matching "{modalGuestSearch}"
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newName = modalGuestSearch || 'New Guest';
+                                setNewPayment({
+                                  ...newPayment,
+                                  guestName: newName,
+                                  guestEmail: `${newName.toLowerCase().replace(/\s+/g, '')}@x.dummyjson.com`,
+                                });
+                                setIsGuestSelected(true);
+                                setIsGuestDropdownOpen(false);
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-[#C5A059] text-white text-xs font-bold shadow-xs hover:bg-[#b08d48] cursor-pointer inline-flex items-center space-x-1"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Use "{modalGuestSearch}" as Guest</span>
+                            </button>
+                          </div>
+                        ) : (
+                          modalFilteredGuests.map((g) => (
+                            <div
+                              key={g.id}
+                              onClick={() => {
+                                setNewPayment({
+                                  ...newPayment,
+                                  guestName: g.fullName,
+                                  guestEmail: g.email || `${g.fullName.toLowerCase().replace(/\s+/g, '')}@x.dummyjson.com`,
+                                });
+                                setIsGuestSelected(true);
+                                setIsGuestDropdownOpen(false);
+                              }}
+                              className="p-2.5 hover:bg-[#F7F2E7] cursor-pointer flex items-center justify-between transition-colors group"
+                            >
+                              <div className="flex items-center space-x-3 min-w-0">
+                                <img
+                                  src={g.avatar || 'https://dummyjson.com/icon/emilyj/128'}
+                                  alt={g.fullName}
+                                  className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 group-hover:border-[#C5A059]"
+                                />
+                                <div className="min-w-0">
+                                  <span className="font-['Poppins'] font-bold text-[#1E2B37] group-hover:text-[#C5A059] block leading-snug truncate">
+                                    {g.fullName}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 font-mono block truncate">
+                                    {g.email} • {g.mobile}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0 ml-2">
+                                <span
+                                  className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                    g.status === 'Checked-In'
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : g.status === 'Active'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-slate-100 text-slate-600'
+                                  }`}
+                                >
+                                  {g.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -650,10 +851,15 @@ export const PaymentsPage = () => {
                     onChange={(e) => setNewPayment({ ...newPayment, roomNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
                   >
-                    <option value="# No.101"># No.101</option>
-                    <option value="# No.102"># No.102</option>
-                    <option value="# No.201"># No.201</option>
-                    <option value="# No.301"># No.301</option>
+                    {availableRooms.length === 0 ? (
+                      <option value="">No Rooms Available</option>
+                    ) : (
+                      availableRooms.map((r) => (
+                        <option key={r.id} value={r.number}>
+                          {r.number} - {r.type} (${r.price}/night)
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -715,6 +921,165 @@ export const PaymentsPage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Payment Modal */}
+      {editingPayment && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <Edit className="w-5 h-5 text-blue-600" />
+                <h3 className="font-['Poppins'] text-lg font-extrabold text-[#1E2B37]">
+                  Edit Payment Record ({editingPayment.id})
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingPayment(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateReservation({
+                  id: editingPayment.bookingId,
+                  guestName: editingPayment.guest,
+                  totalAmount: Number(editingPayment.amount),
+                  paymentStatus: editingPayment.status,
+                  roomNumber: editingPayment.room,
+                });
+                setEditingPayment(null);
+                toast.success(`Updated payment record ${editingPayment.id} for ${editingPayment.guest}!`);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Guest Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingPayment.guest}
+                  onChange={(e) => setEditingPayment({ ...editingPayment, guest: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-semibold focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Room #</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={editingPayment.room}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Payment Amount ($)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editingPayment.amount}
+                    onChange={(e) => setEditingPayment({ ...editingPayment, amount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-mono font-bold focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Payment Method</label>
+                  <select
+                    value={editingPayment.method}
+                    onChange={(e) => setEditingPayment({ ...editingPayment, method: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-semibold focus:outline-none focus:border-[#C5A059]"
+                  >
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Debit Card">Debit Card</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Payment Status</label>
+                  <select
+                    value={editingPayment.status}
+                    onChange={(e) => setEditingPayment({ ...editingPayment, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-[#C5A059] text-emerald-600"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Refunded">Refunded</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingPayment(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer shadow-xs"
+                >
+                  Update Payment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Payment Confirmation Modal */}
+      {confirmDeletePayment && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center space-x-3 text-rose-600">
+              <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-['Poppins'] text-lg font-extrabold text-[#1E2B37]">Delete Payment Record?</h3>
+                <p className="text-xs text-slate-400 font-mono">Invoice Ref: {confirmDeletePayment.id}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+              Are you sure you want to delete payment record for <strong className="text-[#1E2B37]">{confirmDeletePayment.guest}</strong> (${confirmDeletePayment.amount})? This will also release Room <strong className="text-[#1E2B37]">{confirmDeletePayment.room}</strong> to Available status and purge the reservation record.
+            </p>
+
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeletePayment(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 cursor-pointer text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteReservation(confirmDeletePayment.bookingId);
+                  setConfirmDeletePayment(null);
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-xs"
+              >
+                Yes, Delete Record
+              </button>
+            </div>
           </div>
         </div>
       )}
