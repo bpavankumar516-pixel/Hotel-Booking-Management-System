@@ -493,7 +493,124 @@ export const HotelProvider = ({ children }) => {
     toast.success(`Reservation ${newRes.id} created for ${newRes.guestName}! Room ${newRes.roomNumber} updated.`);
   };
 
-  const checkInReservation = (resId) => {
+  // 5. Module 06: Central Check-In & Check-Out History Logs
+  const [checkInLogs, setCheckInLogs] = useState(() => {
+    const saved = localStorage.getItem('grand_horizon_checkin_logs');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 'IN-LOG-101',
+            resId: 'RES-9013',
+            guestName: 'Michael Williams',
+            roomNumber: '# No.102',
+            roomType: 'Deluxe Suite',
+            checkInTime: 'Sept 23, 2026, 3:15 PM',
+            keyCard: 'KC-102-A',
+            depositPaid: '$250',
+            operator: 'Front Desk Officer',
+            notes: 'Guest checked in. Issued digital RFID key card. Room # No.102 set to Occupied.',
+          },
+          {
+            id: 'IN-LOG-102',
+            resId: 'RES-9015',
+            guestName: 'James Miller',
+            roomNumber: '# No.202',
+            roomType: 'Standard Room',
+            checkInTime: 'Sept 20, 2026, 2:45 PM',
+            keyCard: 'KC-202-B',
+            depositPaid: '$150',
+            operator: 'Front Desk Officer',
+            notes: 'Checked in smoothly. Welcome tropical mocktail served.',
+          },
+        ];
+  });
+
+  const [checkOutLogs, setCheckOutLogs] = useState(() => {
+    const saved = localStorage.getItem('grand_horizon_checkout_logs');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 'OUT-LOG-201',
+            resId: 'RES-9015',
+            guestName: 'James Miller',
+            roomNumber: '# No.202',
+            roomType: 'Standard Room',
+            checkOutTime: 'Sept 23, 2026, 11:00 AM',
+            totalFolio: '$285',
+            operator: 'Front Desk Officer',
+            status: 'Completed',
+            notes: 'Folio paid in full ($285). Key card returned. Housekeeping notified for Room # No.202.',
+          },
+        ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('grand_horizon_checkin_logs', JSON.stringify(checkInLogs));
+  }, [checkInLogs]);
+
+  useEffect(() => {
+    localStorage.setItem('grand_horizon_checkout_logs', JSON.stringify(checkOutLogs));
+  }, [checkOutLogs]);
+
+  // Dynamic Stay Duration & Progress Calculation Helper
+  const calculateStayProgress = (checkInStr, checkOutStr, status) => {
+    const start = new Date(checkInStr);
+    const end = new Date(checkOutStr);
+    const now = new Date('2026-09-24T12:00:00');
+
+    const totalNights = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+
+    if (status === 'Completed') {
+      return {
+        nights: totalNights,
+        daysElapsed: totalNights,
+        daysRemaining: 0,
+        progressPercent: 100,
+        statusLabel: 'Completed Stay',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+      };
+    }
+
+    if (status === 'Cancelled') {
+      return {
+        nights: totalNights,
+        daysElapsed: 0,
+        daysRemaining: 0,
+        progressPercent: 0,
+        statusLabel: 'Cancelled Stay',
+        badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+      };
+    }
+
+    const diffTime = now - start;
+    const daysElapsed = Math.max(0, Math.min(totalNights, Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1));
+    const daysRemaining = Math.max(0, totalNights - daysElapsed);
+    const progressPercent = Math.min(100, Math.max(0, Math.round((daysElapsed / totalNights) * 100)));
+
+    if (status === 'Checked-In') {
+      return {
+        nights: totalNights,
+        daysElapsed: daysElapsed || 1,
+        daysRemaining: daysRemaining,
+        progressPercent: progressPercent || 50,
+        statusLabel: `Active Stay: Day ${daysElapsed || 1} of ${totalNights} (${progressPercent || 50}% Elapsed)`,
+        badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      };
+    }
+
+    return {
+      nights: totalNights,
+      daysElapsed: 0,
+      daysRemaining: totalNights,
+      progressPercent: 0,
+      statusLabel: `Upcoming Stay (${totalNights} ${totalNights === 1 ? 'Night' : 'Nights'})`,
+      badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    };
+  };
+
+  const checkInReservation = (resId, keyCardCustom) => {
     const targetRes = reservations.find((r) => r.id === resId);
     if (!targetRes) return;
 
@@ -509,7 +626,23 @@ export const HotelProvider = ({ children }) => {
       )
     );
 
-    toast.success(`Guest ${targetRes.guestName} checked in to ${targetRes.roomNumber}! Room marked Occupied.`);
+    const generatedKeyCard = keyCardCustom || `KC-${targetRes.roomNumber.replace(/[^0-9]/g, '') || '101'}-A`;
+    const newLog = {
+      id: `IN-LOG-${Date.now()}`,
+      resId: targetRes.id,
+      guestName: targetRes.guestName,
+      roomNumber: targetRes.roomNumber,
+      roomType: targetRes.roomType,
+      checkInTime: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      keyCard: generatedKeyCard,
+      depositPaid: '$250',
+      operator: 'Front Desk Officer',
+      notes: `Guest checked in to ${targetRes.roomNumber}. Issued digital RFID key card ${generatedKeyCard}.`,
+    };
+
+    setCheckInLogs((prev) => [newLog, ...prev]);
+
+    toast.success(`Guest ${targetRes.guestName} checked in to ${targetRes.roomNumber}! Key card ${generatedKeyCard} issued.`);
   };
 
   const checkOutReservation = (resId) => {
@@ -528,7 +661,52 @@ export const HotelProvider = ({ children }) => {
       )
     );
 
+    const newLog = {
+      id: `OUT-LOG-${Date.now()}`,
+      resId: targetRes.id,
+      guestName: targetRes.guestName,
+      roomNumber: targetRes.roomNumber,
+      roomType: targetRes.roomType,
+      checkOutTime: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      totalFolio: `$${targetRes.totalAmount}`,
+      operator: 'Front Desk Officer',
+      status: 'Completed',
+      notes: `Check-out finalized. Key card returned. Room ${targetRes.roomNumber} set to Available for Housekeeping.`,
+    };
+
+    setCheckOutLogs((prev) => [newLog, ...prev]);
+
     toast.info(`Guest ${targetRes.guestName} checked out. Room ${targetRes.roomNumber} marked Available.`);
+  };
+
+  const updateBookingStatus = (resId, newStatus, newPaymentStatus) => {
+    const targetRes = reservations.find((r) => r.id === resId);
+    if (!targetRes) return;
+
+    if (newStatus === 'Checked-In') {
+      checkInReservation(resId);
+      return;
+    }
+
+    if (newStatus === 'Completed') {
+      checkOutReservation(resId);
+      return;
+    }
+
+    if (newStatus === 'Cancelled') {
+      cancelReservation(resId);
+      return;
+    }
+
+    setReservations((prev) =>
+      prev.map((r) =>
+        r.id === resId
+          ? { ...r, status: newStatus, paymentStatus: newPaymentStatus || r.paymentStatus }
+          : r
+      )
+    );
+
+    toast.info(`Updated reservation ${resId} status to "${newStatus}".`);
   };
 
   const cancelReservation = (resId) => {
@@ -644,6 +822,10 @@ export const HotelProvider = ({ children }) => {
         notifications,
         availableRoomsList,
         recentReservationsList: reservations.slice(0, 5),
+        checkInLogs,
+        checkOutLogs,
+        updateBookingStatus,
+        calculateStayProgress,
         addRoom,
         updateRoom,
         deleteRoom,

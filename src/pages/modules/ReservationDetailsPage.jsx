@@ -22,6 +22,8 @@ import {
   Phone,
   CreditCard,
   Globe,
+  Key,
+  History,
 } from 'lucide-react';
 
 export const ReservationDetailsPage = () => {
@@ -34,6 +36,10 @@ export const ReservationDetailsPage = () => {
     checkInReservation,
     checkOutReservation,
     cancelReservation,
+    updateBookingStatus,
+    calculateStayProgress,
+    checkInLogs,
+    checkOutLogs,
   } = useHotel();
 
   // Find target reservation by ID
@@ -67,6 +73,13 @@ export const ReservationDetailsPage = () => {
     (r) => r.number.toLowerCase().trim() === res.roomNumber?.toLowerCase()?.trim()
   );
 
+  // Filter linked logs for this reservation
+  const linkedCheckInLogs = checkInLogs.filter((log) => log.resId === res.id);
+  const linkedCheckOutLogs = checkOutLogs.filter((log) => log.resId === res.id);
+
+  // Dynamic Stay Progress Calculation
+  const stayProgress = calculateStayProgress(res.checkIn, res.checkOut, res.status);
+
   const handleCheckIn = () => {
     checkInReservation(res.id);
   };
@@ -77,6 +90,10 @@ export const ReservationDetailsPage = () => {
 
   const handleCancel = () => {
     cancelReservation(res.id);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    updateBookingStatus(res.id, newStatus);
   };
 
   const handlePrintReceipt = () => {
@@ -109,14 +126,14 @@ export const ReservationDetailsPage = () => {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           {res.status === 'Confirmed' && (
             <button
               onClick={handleCheckIn}
               className="py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
-              <span>Check-In Guest</span>
+              <span>Express Check-In</span>
             </button>
           )}
 
@@ -126,7 +143,7 @@ export const ReservationDetailsPage = () => {
               className="py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Check-Out Guest</span>
+              <span>Express Check-Out</span>
             </button>
           )}
 
@@ -141,38 +158,96 @@ export const ReservationDetailsPage = () => {
         </div>
       </div>
 
-      {/* Status Badges Banner */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Reservation Status:</span>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
-              res.status === 'Confirmed'
-                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                : res.status === 'Checked-In'
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                : res.status === 'Completed'
-                ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                : 'bg-rose-100 text-rose-800 border border-rose-300'
-            }`}
+      {/* Dynamic Status Badges & Quick Status Update Selector */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Booking Status:</span>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase border ${stayProgress.badgeColor}`}
+            >
+              {res.status}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Status:</span>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase border ${
+                res.paymentStatus === 'Paid'
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : res.paymentStatus === 'Pending'
+                  ? 'bg-amber-100 text-amber-800 border-amber-300'
+                  : 'bg-slate-100 text-slate-700 border-slate-300'
+              }`}
+            >
+              {res.paymentStatus}
+            </span>
+          </div>
+        </div>
+
+        {/* Dynamic Booking Status Update Controls */}
+        <div className="flex items-center space-x-2 w-full md:w-auto">
+          <label className="text-xs font-bold text-slate-600 shrink-0">Update Status:</label>
+          <select
+            value={res.status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-[#1E2B37] cursor-pointer focus:outline-none focus:border-[#C5A059]"
           >
-            {res.status}
+            <option value="Confirmed">Confirmed</option>
+            <option value="Checked-In">Checked-In</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Dynamic Stay Duration & Live Progress Indicator */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <div>
+            <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">
+              Dynamic Stay Duration & Live Progress Tracker
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Live stay breakdown from Check-In ({res.checkIn}) to Check-Out ({res.checkOut}).
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold text-[#C5A059] bg-amber-50 px-3 py-1 rounded-lg border border-amber-200 shrink-0 self-start sm:self-auto">
+            {stayProgress.statusLabel}
           </span>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Status:</span>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
-              res.paymentStatus === 'Paid'
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                : res.paymentStatus === 'Pending'
-                ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                : 'bg-slate-100 text-slate-700 border border-slate-300'
-            }`}
-          >
-            {res.paymentStatus}
-          </span>
+        {/* Visual Progress Bar */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs font-bold text-slate-600">
+            <span>Check-In ({res.checkIn})</span>
+            <span>{stayProgress.progressPercent}% Stay Elapsed</span>
+            <span>Check-Out ({res.checkOut})</span>
+          </div>
+          <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+            <div
+              className="bg-[#C5A059] h-full transition-all duration-500 rounded-full"
+              style={{ width: `${stayProgress.progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+            <span className="text-slate-400 font-bold block uppercase text-[10px]">Total Nights</span>
+            <span className="font-mono font-extrabold text-[#1E2B37] text-sm mt-0.5 block">{res.nights} Nights Stay</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+            <span className="text-slate-400 font-bold block uppercase text-[10px]">Assigned Room</span>
+            <span className="font-bold text-[#1E2B37] text-sm mt-0.5 block">{res.roomNumber} ({res.roomType})</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+            <span className="text-slate-400 font-bold block uppercase text-[10px]">RFID Key Code</span>
+            <span className="font-mono font-extrabold text-emerald-600 text-sm mt-0.5 block">
+              {linkedCheckInLogs[0]?.keyCard || `KC-${res.roomNumber.replace(/[^0-9]/g, '') || '101'}-A`}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -251,21 +326,43 @@ export const ReservationDetailsPage = () => {
             </div>
           </div>
 
-          {/* Special Requests & Guest Inclusions */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-3">
-            <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37] pb-2 border-b border-slate-100">
-              Special Requests & Suite Preferences
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-[#C5A059]" />
-                <span className="font-semibold text-slate-700">Executive Airport Transfer Requested</span>
-              </div>
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-[#C5A059]" />
-                <span className="font-semibold text-slate-700">Hydrotherapy Jacuzzi Pre-Arrival Setup</span>
-              </div>
+          {/* Linked Check-In & Check-Out History Logs */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">
+                Check-In & Check-Out Audit Logs
+              </h3>
+              <span className="text-xs font-mono text-[#C5A059] font-bold">
+                {linkedCheckInLogs.length + linkedCheckOutLogs.length} History Events
+              </span>
             </div>
+
+            {linkedCheckInLogs.length === 0 && linkedCheckOutLogs.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center p-4 bg-slate-50 rounded-xl">
+                No formal check-in or check-out activity logged for this reservation yet.
+              </p>
+            ) : (
+              <div className="space-y-2 text-xs">
+                {linkedCheckInLogs.map((log) => (
+                  <div key={log.id} className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/60 flex justify-between items-center">
+                    <div>
+                      <span className="font-mono text-[10px] font-bold text-emerald-700 block">Check-In Event ({log.id})</span>
+                      <strong className="text-[#1E2B37]">{log.notes}</strong>
+                    </div>
+                    <span className="font-mono text-[11px] text-slate-500 shrink-0 ml-2">{log.checkInTime}</span>
+                  </div>
+                ))}
+                {linkedCheckOutLogs.map((log) => (
+                  <div key={log.id} className="p-3 bg-blue-50/60 rounded-xl border border-blue-200/60 flex justify-between items-center">
+                    <div>
+                      <span className="font-mono text-[10px] font-bold text-blue-700 block">Check-Out Event ({log.id})</span>
+                      <strong className="text-[#1E2B37]">{log.notes}</strong>
+                    </div>
+                    <span className="font-mono text-[11px] text-slate-500 shrink-0 ml-2">{log.checkOutTime}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -278,12 +375,12 @@ export const ReservationDetailsPage = () => {
           {/* Stay Timeline */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-bold uppercase text-[10px]">Check-In Date:</span>
-              <span className="font-mono font-bold text-[#1E2B37]">{res.checkIn} (After 2:00 PM)</span>
+              <span className="text-slate-400 font-bold uppercase text-[10px]">Check-In Schedule:</span>
+              <span className="font-mono font-bold text-[#1E2B37]">{res.checkIn} (3:00 PM Onwards)</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-bold uppercase text-[10px]">Check-Out Date:</span>
-              <span className="font-mono font-bold text-[#1E2B37]">{res.checkOut} (Before 12:00 PM)</span>
+              <span className="text-slate-400 font-bold uppercase text-[10px]">Check-Out Schedule:</span>
+              <span className="font-mono font-bold text-[#1E2B37]">{res.checkOut} (Before 11:00 AM)</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-slate-200">
               <span className="text-slate-400 font-bold uppercase text-[10px]">Stay Duration:</span>

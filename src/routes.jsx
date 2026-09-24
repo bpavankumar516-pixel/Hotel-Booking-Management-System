@@ -12,13 +12,16 @@ import { ProfilePage } from './pages/auth/ProfilePage';
 // Module 2: Dashboard Analytics Page (Full Rich Dashboard)
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 
-// Module 3, 4, 5: Active Full Pages
+// Module 3, 4, 5, 6, 9: Active Full Pages
 import { RoomManagementPage } from './pages/modules/RoomManagementPage';
 import { RoomDetailsPage } from './pages/modules/RoomDetailsPage';
 import { GuestManagementPage } from './pages/modules/GuestManagementPage';
 import { GuestDetailsPage } from './pages/modules/GuestDetailsPage';
 import { RoomBookingPage } from './pages/modules/RoomBookingPage';
 import { ReservationDetailsPage } from './pages/modules/ReservationDetailsPage';
+import { CheckInOutPage } from './pages/modules/CheckInOutPage';
+import { BookingHistoryPage } from './pages/modules/BookingHistoryPage';
+import { MaintenancePage } from './pages/modules/MaintenancePage';
 
 // Common Minimal Placeholder Page for Remaining Sub-Pages
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -68,7 +71,7 @@ export const AppRoutes = () => {
         }
       />
 
-      {/* Remaining Sub-Pages rendered as Clean Minimal Placeholders */}
+      {/* Remaining Sub-Pages */}
       {/* Module 3: Active Room Management */}
       <Route
         path="/rooms"
@@ -135,45 +138,67 @@ export const AppRoutes = () => {
         }
       />
 
+      {/* Module 6: Redirect frontdesk / checkin / checkout ops directly into Reservations Engine */}
       <Route
         path="/frontdesk"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Front Desk Ops" moduleNumber="06" description="Express check-in, check-out processing, and stay logs." />
+              <Navigate to="/reservations" replace />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checkin"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Navigate to="/reservations" replace />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Navigate to="/reservations" replace />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
 
+      {/* Maintenance & Hotel Operations Route */}
+      <Route
+        path="/maintenance"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <MaintenancePage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/housekeeping"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Housekeeping" moduleNumber="07" description="Room cleaning status, inspection queue, and room readiness." />
+              <Navigate to="/maintenance" replace />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
 
-      <Route
-        path="/payments"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <ModulePlaceholderPage title="Payments & Billing" moduleNumber="08" description="Payment history, invoice generation, and receipt downloads." />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-
+      {/* Module 9: Booking History */}
       <Route
         path="/history"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Booking History" moduleNumber="09" description="Historical reservation records, status filter, and cancellations." />
+              <BookingHistoryPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
