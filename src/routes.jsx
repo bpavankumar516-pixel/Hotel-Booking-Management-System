@@ -22,6 +22,8 @@ import { ReservationDetailsPage } from './pages/modules/ReservationDetailsPage';
 import { CheckInOutPage } from './pages/modules/CheckInOutPage';
 import { BookingHistoryPage } from './pages/modules/BookingHistoryPage';
 import { MaintenancePage } from './pages/modules/MaintenancePage';
+import { PaymentsPage } from './pages/modules/PaymentsPage';
+import { InvoiceDetailsPage } from './pages/modules/InvoiceDetailsPage';
 
 // Common Minimal Placeholder Page for Remaining Sub-Pages
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -187,6 +189,28 @@ export const AppRoutes = () => {
           <ProtectedRoute>
             <DashboardLayout>
               <Navigate to="/maintenance" replace />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Payments & Billing Route */}
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PaymentsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/invoice/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <InvoiceDetailsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import hotelApiService from '../services/hotelApiService';
+import { fetchDummyJsonUsers } from '../services/dummyJsonService';
 
 const HotelContext = createContext(null);
 
@@ -344,31 +346,10 @@ export const HotelProvider = ({ children }) => {
   // --- DUMMYJSON GUESTS FETCH ENGINE ---
   const reloadDummyGuests = async (showToast = false) => {
     try {
-      const response = await fetch('https://dummyjson.com/users?limit=30');
-      const data = await response.json();
-      if (data && data.users && Array.isArray(data.users)) {
-        const mappedGuests = data.users.map((u, idx) => {
-          const statusOptions = ['Active', 'Checked-In', 'Checked-Out'];
-          let status = statusOptions[idx % 3];
-          if (idx === 0) status = 'Checked-In';
-          if (idx === 1) status = 'Checked-In';
-          if (idx === 2) status = 'Active';
-
-          return {
-            id: u.id,
-            fullName: `${u.firstName} ${u.lastName}`,
-            email: u.email,
-            mobile: u.phone || `+1 555-${100 + u.id}-${2000 + u.id}`,
-            idProof: u.ssn || u.ein || `PASSPORT-${100000 + u.id * 137}`,
-            nationality: u.address?.country || 'United States',
-            address: `${u.address?.address || ''}, ${u.address?.city || ''}, ${u.address?.state || ''}`.replace(/^,\s*|,\s*$/g, ''),
-            status: status,
-            avatar: u.image || `https://dummyjson.com/icon/${u.username}/128`,
-          };
-        });
-
+      const mappedGuests = await fetchDummyJsonUsers(30);
+      if (mappedGuests && mappedGuests.length > 0) {
         setGuests(mappedGuests);
-        localStorage.setItem('grand_horizon_guests', JSON.stringify(mappedGuests));
+        hotelApiService.saveGuests(mappedGuests);
         localStorage.setItem('grand_horizon_dummyjson_loaded_v1', 'true');
 
         // Sync existing reservations with DummyJSON guests if needed
@@ -388,12 +369,12 @@ export const HotelProvider = ({ children }) => {
             }
             return resItem;
           });
-          localStorage.setItem('grand_horizon_reservations', JSON.stringify(updatedRes));
+          hotelApiService.saveReservations(updatedRes);
           return updatedRes;
         });
 
         if (showToast) {
-          toast.success(`Loaded 30 guest records from DummyJSON API & synced reservations.`);
+          toast.success(`Loaded ${mappedGuests.length} guest records from DummyJSON API & synced reservations.`);
         }
       }
     } catch (error) {
@@ -411,16 +392,19 @@ export const HotelProvider = ({ children }) => {
     }
   }, []);
 
-  // Persist State to LocalStorage
+  // Persist State via hotelApiService & LocalStorage fallback
   useEffect(() => {
+    hotelApiService.saveRooms(rooms);
     localStorage.setItem('grand_horizon_rooms', JSON.stringify(rooms));
   }, [rooms]);
 
   useEffect(() => {
+    hotelApiService.saveGuests(guests);
     localStorage.setItem('grand_horizon_guests', JSON.stringify(guests));
   }, [guests]);
 
   useEffect(() => {
+    hotelApiService.saveReservations(reservations);
     localStorage.setItem('grand_horizon_reservations', JSON.stringify(reservations));
   }, [reservations]);
 
@@ -722,6 +706,13 @@ export const HotelProvider = ({ children }) => {
     toast.error(`Reservation ${resId} cancelled. Room ${targetRes.roomNumber} freed.`);
   };
 
+  const updatePaymentStatus = (resId, newPaymentStatus) => {
+    setReservations((prev) =>
+      prev.map((r) => (r.id === resId ? { ...r, paymentStatus: newPaymentStatus } : r))
+    );
+    toast.success(`Payment status for ${resId} updated to "${newPaymentStatus}".`);
+  };
+
   // --- COMPUTED DASHBOARD METRICS ---
   const availableRoomsList = rooms.filter((r) => r.status === 'Available');
   const occupiedRoomsCount = rooms.filter((r) => r.status === 'Occupied').length;
@@ -838,6 +829,7 @@ export const HotelProvider = ({ children }) => {
         checkInReservation,
         checkOutReservation,
         cancelReservation,
+        updatePaymentStatus,
       }}
     >
       {children}
