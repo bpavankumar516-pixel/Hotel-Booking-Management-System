@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useHotel } from '../../contexts/HotelContext';
 import { toast } from 'react-toastify';
 import {
@@ -17,117 +18,13 @@ import {
   Wrench,
   Building2,
   Sparkles,
-  Users,
-  Layers,
-  DollarSign,
-  Image as ImageIcon,
-  FileText,
 } from 'lucide-react';
 import { SkeletonActionCard } from '../../components/common/Skeleton';
 
-// Local Mock Dataset tailored to requested Room Types & Statuses
-const MOCK_ROOMS = [
-  {
-    id: 101,
-    number: '# No.101',
-    type: 'Presidential Suite',
-    price: 250,
-    capacity: 4,
-    floor: 1,
-    status: 'Available',
-    amenities: 'Private Plunge Pool, Panoramic Ocean View, King Bed, Jacuzzi, Butler Service, 4K Smart TV',
-    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
-    description: 'Ultra-luxurious oceanfront presidential suite with private balcony plunge pool, master king bedroom, marble Jacuzzi bathroom, and 24/7 butler concierge.',
-  },
-  {
-    id: 102,
-    number: '# No.102',
-    type: 'Deluxe Suite',
-    price: 140,
-    capacity: 2,
-    floor: 1,
-    status: 'Occupied',
-    amenities: 'King Bed, Private Balcony, High-speed WiFi, Espresso Machine, Marble Bathroom, AC',
-    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
-    description: 'Elegant deluxe suite offering scenic resort views, plush plush king bedding, spa bath amenities, and a private furnished balcony.',
-  },
-  {
-    id: 201,
-    number: '# No.201',
-    type: 'Executive Room',
-    price: 165,
-    capacity: 3,
-    floor: 2,
-    status: 'Available',
-    amenities: 'Ocean Sunset View, King Bed + Lounge Sofa, Free High-speed WiFi, Smart TV, Mini Bar',
-    image: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&q=80&w=800',
-    description: 'Spacious executive room tailored for business travelers and luxury seekers, featuring dedicated work station, ocean view, and executive lounge access.',
-  },
-  {
-    id: 202,
-    number: '# No.202',
-    type: 'Standard Room',
-    price: 95,
-    capacity: 2,
-    floor: 2,
-    status: 'Occupied',
-    amenities: 'Queen Bed, Work Desk, Air Conditioner, Smart TV, Garden View, Coffee Maker',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800',
-    description: 'Comfortable standard room with modern decor, queen size bed, garden view balcony, and high-speed wireless internet.',
-  },
-  {
-    id: 301,
-    number: '# No.301',
-    type: 'Presidential Suite',
-    price: 280,
-    capacity: 5,
-    floor: 3,
-    status: 'Available',
-    amenities: 'Infinity Terrace, Private Jacuzzi, 2 King Bedrooms, Full Kitchenette, Premium Lounge',
-    image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&q=80&w=800',
-    description: 'Top-tier presidential suite with dual king master bedrooms, private outdoor Jacuzzi terrace, full kitchenette, and panoramic coastline view.',
-  },
-  {
-    id: 302,
-    number: '# No.302',
-    type: 'Deluxe Suite',
-    price: 125,
-    capacity: 2,
-    floor: 3,
-    status: 'Maintenance',
-    amenities: 'Queen Bed, Garden Terrace, Rain Shower, Free WiFi, Tea/Coffee Maker',
-    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&q=80&w=800',
-    description: 'Charming deluxe room overlooking tropical resort gardens, currently undergoing routine deep sanitization and maintenance.',
-  },
-  {
-    id: 401,
-    number: '# No.401',
-    type: 'Executive Room',
-    price: 175,
-    capacity: 3,
-    floor: 4,
-    status: 'Available',
-    amenities: 'Rooftop Lounge View, King Bed, Smart TV, Mini Bar, Rain Shower',
-    image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&q=80&w=800',
-    description: 'Fourth floor executive room with direct access to rooftop terrace, king bedding, premium sound bar, and complimentary minibar.',
-  },
-  {
-    id: 402,
-    number: '# No.402',
-    type: 'Standard Room',
-    price: 90,
-    capacity: 2,
-    floor: 4,
-    status: 'Available',
-    amenities: 'Double Bed, Smart TV, Air Conditioner, Free WiFi, Hair Dryer',
-    image: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&q=80&w=800',
-    description: 'Cozy fourth floor standard room ideal for couples or solo travelers, equipped with double bed, AC, and high-speed WiFi.',
-  },
-];
-
 export const RoomManagementPage = () => {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { rooms, addRoom, updateRoom, deleteRoom, updateRoomStatus } = useHotel();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [filterAvailability, setFilterAvailability] = useState('All');
@@ -150,17 +47,6 @@ export const RoomManagementPage = () => {
     image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
     description: '',
   });
-
-  // Load Mock Room Dataset
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      setRooms(MOCK_ROOMS);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Filtering & Sorting
   const filteredRooms = rooms
@@ -190,46 +76,40 @@ export const RoomManagementPage = () => {
     currentPage * itemsPerPage
   );
 
-  // Handlers
+  // Handlers using HotelContext
   const handleAddSubmit = (e) => {
     e.preventDefault();
-    const newRoomObj = {
-      id: Date.now(),
+    addRoom({
       ...roomForm,
       price: Number(roomForm.price),
       capacity: Number(roomForm.capacity),
       floor: Number(roomForm.floor),
       image: roomForm.image || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800',
-    };
-    setRooms([newRoomObj, ...rooms]);
+    });
     setActiveModal(null);
-    toast.success(`Room ${newRoomObj.number} (${newRoomObj.type}) added successfully!`);
   };
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    const updatedObj = {
+    updateRoom({
       ...selectedRoom,
       ...roomForm,
       price: Number(roomForm.price),
       capacity: Number(roomForm.capacity),
       floor: Number(roomForm.floor),
-    };
-    setRooms(rooms.map((r) => (r.id === selectedRoom.id ? updatedObj : r)));
+    });
     setActiveModal(null);
-    toast.info(`Updated room ${selectedRoom.number} details.`);
   };
 
   const handleStatusChange = (newStatus) => {
     if (!selectedRoom) return;
-    setRooms(rooms.map((r) => (r.id === selectedRoom.id ? { ...r, status: newStatus } : r)));
+    updateRoomStatus(selectedRoom.id, newStatus);
     setActiveModal(null);
     toast.success(`Room ${selectedRoom.number} status updated to "${newStatus}"`);
   };
 
   const handleDelete = (id, number) => {
-    setRooms(rooms.filter((r) => r.id !== id));
-    toast.error(`Deleted room ${number} from directory.`);
+    deleteRoom(id, number);
   };
 
   const openEdit = (room) => {
@@ -239,8 +119,7 @@ export const RoomManagementPage = () => {
   };
 
   const openDetails = (room) => {
-    setSelectedRoom(room);
-    setActiveModal('details');
+    navigate(`/rooms/${room.id}`);
   };
 
   const openStatusModal = (room) => {
@@ -259,14 +138,9 @@ export const RoomManagementPage = () => {
       {/* Module Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 03
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
-              Room & Suite Management
-            </h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
+            Room & Suite Management
+          </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Manage hotel rooms, suite categories, daily rates, capacity, amenities, and real-time availability status.
           </p>
@@ -427,13 +301,7 @@ export const RoomManagementPage = () => {
       </div>
 
       {/* Main Content: Grid / Table */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <SkeletonActionCard />
-          <SkeletonActionCard />
-          <SkeletonActionCard />
-        </div>
-      ) : filteredRooms.length === 0 ? (
+      {filteredRooms.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-xl border border-slate-200/80 space-y-3">
           <BedDouble className="w-12 h-12 text-slate-300 mx-auto" />
           <h3 className="font-['Poppins'] text-base font-bold text-[#1E2B37]">No rooms found matching search filters</h3>
@@ -448,7 +316,10 @@ export const RoomManagementPage = () => {
               className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col group"
             >
               {/* Image & Badges */}
-              <div className="relative h-52 w-full overflow-hidden bg-slate-900">
+              <div
+                onClick={() => navigate(`/rooms/${room.id}`)}
+                className="relative h-52 w-full overflow-hidden bg-slate-900 cursor-pointer"
+              >
                 <img
                   src={room.image}
                   alt={room.number}
@@ -493,15 +364,29 @@ export const RoomManagementPage = () => {
                 </div>
               </div>
 
-              {/* Description & Amenities */}
+              {/* Description & Highlighted Amenities */}
               <div className="p-4 flex-1 flex flex-col justify-between space-y-3 text-xs">
-                <div className="space-y-1.5">
-                  <p className="text-slate-700 font-medium line-clamp-2 leading-relaxed">
+                <div className="space-y-2">
+                  <p className="text-slate-600 font-medium line-clamp-2 leading-relaxed">
                     {room.description || 'Spacious luxury hotel suite equipped with world-class amenities.'}
                   </p>
-                  <p className="text-slate-500 text-[11px]">
-                    <strong className="text-slate-700 font-bold">Amenities:</strong> {room.amenities}
-                  </p>
+                  
+                  <div className="pt-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#C5A059] block mb-1">
+                      Featured Amenities
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {(room.amenities ? room.amenities.split(',') : ['Free WiFi', 'Ocean View', 'Smart TV']).map((amenity, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-50 text-[#1E2B37] border border-amber-200/80 flex items-center space-x-1 shadow-2xs"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-[#C5A059] shrink-0" />
+                          <span>{amenity.trim()}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-slate-500">
@@ -553,11 +438,11 @@ export const RoomManagementPage = () => {
               <tbody className="divide-y divide-slate-100 text-xs text-[#1E2B37]">
                 {paginatedRooms.map((room) => (
                   <tr key={room.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 cursor-pointer" onClick={() => navigate(`/rooms/${room.id}`)}>
                       <div className="flex items-center space-x-3">
                         <img src={room.image} alt={room.number} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
                         <div>
-                          <span className="font-['Poppins'] font-bold text-sm block">{room.number}</span>
+                          <span className="font-['Poppins'] font-bold text-sm block hover:text-[#C5A059] transition-colors">{room.number}</span>
                         </div>
                       </div>
                     </td>

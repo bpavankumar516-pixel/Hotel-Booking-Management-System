@@ -32,7 +32,7 @@ export const Header = () => {
   };
 
   const currentTitle = pageTitles[location.pathname] || 'Dashboard';
-  const unreadCount = notifications.filter((n) => !n.read).length || 4;
+  const unreadCount = (notifications || []).filter((n) => !n.read).length || 3;
 
   return (
     <header className="h-16 bg-white border-b border-slate-200/70 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">

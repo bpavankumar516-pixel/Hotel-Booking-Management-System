@@ -12,9 +12,13 @@ import { ProfilePage } from './pages/auth/ProfilePage';
 // Module 2: Dashboard Analytics Page (Full Rich Dashboard)
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 
-// Module 3 & 4: Active Full Pages
+// Module 3, 4, 5: Active Full Pages
 import { RoomManagementPage } from './pages/modules/RoomManagementPage';
+import { RoomDetailsPage } from './pages/modules/RoomDetailsPage';
 import { GuestManagementPage } from './pages/modules/GuestManagementPage';
+import { GuestDetailsPage } from './pages/modules/GuestDetailsPage';
+import { RoomBookingPage } from './pages/modules/RoomBookingPage';
+import { ReservationDetailsPage } from './pages/modules/ReservationDetailsPage';
 
 // Common Minimal Placeholder Page for Remaining Sub-Pages
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -76,6 +80,16 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/rooms/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RoomDetailsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Module 4: Active Guest Management (DummyJSON Users API) */}
       <Route
@@ -88,13 +102,34 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/guests/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <GuestDetailsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
+      {/* Module 5: Active Reservations & Booking Engine */}
       <Route
         path="/reservations"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Reservations" moduleNumber="05" description="Room booking workflow, stay duration, and confirmations." />
+              <RoomBookingPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reservations/:id"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ReservationDetailsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

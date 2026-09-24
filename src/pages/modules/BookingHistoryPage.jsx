@@ -1,17 +1,32 @@
 import React, { useState } from 'react';
-import { History, Search, Filter, Eye, Ban, CheckCircle2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { History, Search, Filter, Eye, Ban, CheckCircle2 } from 'lucide-react';
+import { useHotel } from '../../contexts/HotelContext';
 
 export const BookingHistoryPage = () => {
-  const [historyList, setHistoryList] = useState([
-    { id: 'LG-B00109', guest: 'Mitchel Johnson', room: '# No.301', checkIn: '2026-09-15', checkOut: '2026-09-18', amount: '$535.50', status: 'Completed' },
-    { id: 'LG-B00105', guest: 'Robert Affleck', room: '# No.105', checkIn: '2026-09-17', checkOut: '2026-09-20', amount: '$750.00', status: 'Completed' },
-    { id: 'LG-B00102', guest: 'Chris Hemsworth', room: '# No.402', checkIn: '2026-09-22', checkOut: '2026-09-24', amount: '$420.00', status: 'Active' },
-    { id: 'LG-B00098', guest: 'Sarah Wilson', room: '# No.281', checkIn: '2026-09-10', checkOut: '2026-09-12', amount: '$310.00', status: 'Canceled' },
-  ]);
+  const navigate = useNavigate();
+  const { guests = [], reservations = [], cancelReservation } = useHotel();
+
+  const historyList = (reservations.length > 0 ? reservations : []).map((r, idx) => {
+    const matchedGuest = guests.find(
+      (g) => g.fullName?.toLowerCase()?.trim() === r.guestName?.toLowerCase()?.trim()
+    );
+    return {
+      id: r.id || `LG-B00${109 - idx}`,
+      guest: r.guestName,
+      email: r.guestEmail,
+      phone: r.guestPhone,
+      avatar: matchedGuest?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      room: r.roomNumber,
+      checkIn: r.checkIn,
+      checkOut: r.checkOut,
+      amount: `$${r.totalAmount}`,
+      status: r.status === 'Cancelled' ? 'Canceled' : r.status === 'Checked-In' ? 'Active' : r.status,
+    };
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
-  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const filteredHistory = historyList.filter((b) => {
     const matchesSearch =
@@ -23,9 +38,7 @@ export const BookingHistoryPage = () => {
   });
 
   const handleCancelBooking = (id) => {
-    setHistoryList(
-      historyList.map((b) => (b.id === id ? { ...b, status: 'Canceled' } : b))
-    );
+    cancelReservation(id);
   };
 
   return (
@@ -33,12 +46,7 @@ export const BookingHistoryPage = () => {
       {/* Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 08
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Booking History</h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Booking History</h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Archived booking records, cancellation management, and stay timelines.
           </p>
@@ -68,6 +76,7 @@ export const BookingHistoryPage = () => {
             <option value="All">All Booking Statuses</option>
             <option value="Completed">Completed</option>
             <option value="Active">Active</option>
+            <option value="Confirmed">Confirmed</option>
             <option value="Canceled">Canceled</option>
           </select>
         </div>
@@ -92,20 +101,29 @@ export const BookingHistoryPage = () => {
             <tbody className="divide-y divide-slate-100 text-xs text-[#1E2B37]">
               {filteredHistory.map((b) => (
                 <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-[#1E2B37]">{b.id}</td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-[#C5A059]">
+                    <button
+                      onClick={() => navigate(`/reservations/${b.id}`)}
+                      className="hover:underline cursor-pointer"
+                    >
+                      {b.id}
+                    </button>
+                  </td>
                   <td className="py-3.5 px-4 font-['Poppins'] font-bold">{b.guest}</td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-[#C5A059]">{b.room}</td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-[#1E2B37]">{b.room}</td>
                   <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">{b.checkIn}</td>
                   <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">{b.checkOut}</td>
-                  <td className="py-3.5 px-4 font-mono font-extrabold">{b.amount}</td>
+                  <td className="py-3.5 px-4 font-mono font-extrabold text-emerald-600">{b.amount}</td>
                   <td className="py-3.5 px-4 text-center">
                     <span
-                      className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-extrabold text-white uppercase ${
+                      className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${
                         b.status === 'Completed'
-                          ? 'bg-[#2ECC71]'
-                          : b.status === 'Active'
-                          ? 'bg-[#2563EB]'
-                          : 'bg-[#E74C3C]'
+                          ? 'bg-blue-100 text-blue-800'
+                          : b.status === 'Active' || b.status === 'Checked-In'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : b.status === 'Confirmed'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-rose-100 text-rose-800'
                       }`}
                     >
                       {b.status}
@@ -113,17 +131,17 @@ export const BookingHistoryPage = () => {
                   </td>
                   <td className="py-3.5 px-4 text-right space-x-1">
                     <button
-                      onClick={() => setSelectedBooking(b)}
+                      onClick={() => navigate(`/reservations/${b.id}`)}
                       title="View Details"
-                      className="p-1.5 text-slate-600 hover:text-[#C5A059] rounded"
+                      className="p-1.5 text-slate-600 hover:text-[#C5A059] hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    {b.status === 'Active' && (
+                    {(b.status === 'Active' || b.status === 'Confirmed') && (
                       <button
                         onClick={() => handleCancelBooking(b.id)}
                         title="Cancel Booking"
-                        className="p-1.5 text-rose-500 hover:text-rose-700 rounded"
+                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                       >
                         <Ban className="w-4 h-4" />
                       </button>
@@ -135,38 +153,7 @@ export const BookingHistoryPage = () => {
           </table>
         </div>
       </div>
-
-      {/* Booking Details Modal */}
-      {selectedBooking && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">
-                Booking Record ({selectedBooking.id})
-              </h3>
-              <button onClick={() => setSelectedBooking(null)} className="p-1 text-slate-400 hover:text-slate-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-2 text-slate-600">
-              <p><span className="font-bold text-[#1E2B37]">Guest:</span> {selectedBooking.guest}</p>
-              <p><span className="font-bold text-[#1E2B37]">Room Number:</span> {selectedBooking.room}</p>
-              <p><span className="font-bold text-[#1E2B37]">Check-In:</span> {selectedBooking.checkIn}</p>
-              <p><span className="font-bold text-[#1E2B37]">Check-Out:</span> {selectedBooking.checkOut}</p>
-              <p><span className="font-bold text-[#1E2B37]">Amount Charged:</span> {selectedBooking.amount}</p>
-              <p><span className="font-bold text-[#1E2B37]">Status:</span> {selectedBooking.status}</p>
-            </div>
-
-            <button
-              onClick={() => setSelectedBooking(null)}
-              className="w-full py-2.5 rounded-lg bg-[#1E2B37] text-white font-bold text-xs"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
+

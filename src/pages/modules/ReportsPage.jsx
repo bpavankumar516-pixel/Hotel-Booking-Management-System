@@ -10,12 +10,7 @@ export const ReportsPage = () => {
     <div className="space-y-6 max-w-[1600px] mx-auto pb-8">
       {/* Title Bar */}
       <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
-        <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-            Module 09
-          </span>
-          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Reports & Analytics</h2>
-        </div>
+        <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Reports & Analytics</h2>
         <p className="text-xs text-slate-500 font-medium mt-0.5">
           Comprehensive business intelligence, revenue performance, room occupancy rate, and booking trends.
         </p>

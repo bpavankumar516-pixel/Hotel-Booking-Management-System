@@ -1,12 +1,28 @@
 import React, { useState } from 'react';
 import { CreditCard, Download, Search, Filter, Printer, FileText, CheckCircle2, X } from 'lucide-react';
+import { useHotel } from '../../contexts/HotelContext';
 
 export const PaymentsPage = () => {
-  const [payments, setPayments] = useState([
-    { id: 'INV-9021', bookingId: 'GH-B00109', guest: 'Mitchel Johnson', room: '# No.301', amount: 535.5, date: '2026-09-20', status: 'Paid', method: 'Credit Card' },
-    { id: 'INV-9022', bookingId: 'GH-B00105', guest: 'Robert Affleck', room: '# No.105', amount: 750.0, date: '2026-09-21', status: 'Paid', method: 'Debit Card' },
-    { id: 'INV-9023', bookingId: 'GH-B00102', guest: 'Chris Hemsworth', room: '# No.402', amount: 420.0, date: '2026-09-22', status: 'Pending', method: 'Cash' },
-  ]);
+  const { reservations = [], guests = [] } = useHotel();
+
+  const payments = reservations.map((r, idx) => {
+    const matchedGuest = guests.find(
+      (g) => g.fullName?.toLowerCase()?.trim() === r.guestName?.toLowerCase()?.trim()
+    );
+    const methods = ['Credit Card', 'Debit Card', 'Bank Transfer', 'Cash'];
+    return {
+      id: `INV-902${idx + 1}`,
+      bookingId: r.id,
+      guest: r.guestName,
+      email: r.guestEmail,
+      avatar: matchedGuest?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      room: r.roomNumber,
+      amount: r.totalAmount,
+      date: r.checkIn,
+      status: r.paymentStatus || 'Paid',
+      method: methods[idx % methods.length],
+    };
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -30,12 +46,7 @@ export const PaymentsPage = () => {
       {/* Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 07
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Payments & Invoices</h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">Payments & Invoices</h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Payment processing history, invoice generation, status filters, and guest receipt downloads.
           </p>

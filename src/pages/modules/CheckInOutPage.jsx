@@ -43,14 +43,9 @@ export const CheckInOutPage = () => {
       {/* Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 06
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
-              Front Desk Express Ops
-            </h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
+            Front Desk Express Ops
+          </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Rapid guest check-in, key card allocation, minibar clearance, and express checkout processing.
           </p>

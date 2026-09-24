@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useHotel } from '../../contexts/HotelContext';
 import { toast } from 'react-toastify';
 import {
   Users,
@@ -23,14 +25,14 @@ import {
   List,
   Filter,
   RefreshCw,
-  ShieldCheck,
-  User,
+  CalendarCheck,
 } from 'lucide-react';
 import { SkeletonStatCard, SkeletonTable } from '../../components/common/Skeleton';
 
 export const GuestManagementPage = () => {
-  const [guests, setGuests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { guests, reservations, addGuest, updateGuest, deleteGuest, reloadDummyGuests } = useHotel();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
@@ -50,90 +52,6 @@ export const GuestManagementPage = () => {
     status: 'Checked-In',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
   });
-
-  // Fetch Guest Users from DummyJSON Users API (https://dummyjson.com/users)
-  const fetchGuestsFromApi = async (isManual = false) => {
-    setLoading(true);
-    try {
-      const res = await fetch('https://dummyjson.com/users?limit=30');
-      const data = await res.json();
-      if (data && data.users && data.users.length > 0) {
-        const mappedGuests = data.users.map((user) => {
-          const statuses = ['Checked-In', 'Active', 'Checked-Out'];
-          const status = statuses[user.id % 3];
-          const idProofPrefixes = ['PASSPORT', 'DL-USA', 'NAT-ID', 'PASSPORT'];
-          const prefix = idProofPrefixes[user.id % 4];
-
-          return {
-            id: user.id,
-            fullName: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-            mobile: user.phone,
-            idProof: `${prefix}-${user.ssn ? user.ssn.substring(0, 8) : user.id * 8921}`,
-            nationality: user.address.state ? `${user.address.state}, USA` : 'International',
-            address: `${user.address.address}, ${user.address.city}, ${user.address.state}`,
-            status: status,
-            avatar: user.image || `https://dummyjson.com/icon/${user.username}/150`,
-          };
-        });
-        setGuests(mappedGuests);
-        if (isManual) {
-          toast.success(`Refreshed ${mappedGuests.length} guest records.`);
-        }
-      } else {
-        fallbackGuests();
-      }
-    } catch (err) {
-      if (isManual) {
-        toast.warning('Using offline guest directory.');
-      }
-      fallbackGuests();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fallbackGuests = () => {
-    setGuests([
-      {
-        id: 1,
-        fullName: 'Mitchel Johnson',
-        email: 'mitchel@example.com',
-        mobile: '+99 256 896 8855',
-        idProof: 'PASSPORT-902188',
-        nationality: 'American',
-        address: '742 Evergreen Terrace, Springfield, OR',
-        status: 'Checked-In',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-      },
-      {
-        id: 2,
-        fullName: 'Robert Affleck',
-        email: 'robert@example.com',
-        mobile: '+81 569 854 8866',
-        idProof: 'DL-USA-442109',
-        nationality: 'Canadian',
-        address: '45 Park Avenue, New York, NY',
-        status: 'Active',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-      },
-      {
-        id: 3,
-        fullName: 'Sarah Wilson',
-        email: 'sarah@example.com',
-        mobile: '+1 408 923 1188',
-        idProof: 'PASSPORT-881240',
-        nationality: 'British',
-        address: '99 Sunset Blvd, Los Angeles, CA',
-        status: 'Checked-Out',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      },
-    ]);
-  };
-
-  useEffect(() => {
-    fetchGuestsFromApi();
-  }, []);
 
   // Filter Guests
   const filteredGuests = guests.filter((g) => {
@@ -156,28 +74,27 @@ export const GuestManagementPage = () => {
     currentPage * itemsPerPage
   );
 
-  // Handlers
+  // Handlers using HotelContext
   const handleAddSubmit = (e) => {
     e.preventDefault();
-    const newGuestObj = {
-      id: Date.now(),
+    addGuest({
       ...guestForm,
-    };
-    setGuests([newGuestObj, ...guests]);
+      avatar: guestForm.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    });
     setActiveModal(null);
-    toast.success(`Guest profile created for ${newGuestObj.fullName}`);
   };
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    setGuests(guests.map((g) => (g.id === selectedGuest.id ? { ...selectedGuest, ...guestForm } : g)));
+    updateGuest({
+      ...selectedGuest,
+      ...guestForm,
+    });
     setActiveModal(null);
-    toast.info(`Updated guest profile for ${guestForm.fullName}`);
   };
 
   const handleDelete = (id, name) => {
-    setGuests(guests.filter((g) => g.id !== id));
-    toast.error(`Removed ${name} from guest directory.`);
+    deleteGuest(id, name);
   };
 
   const openEdit = (g) => {
@@ -187,8 +104,15 @@ export const GuestManagementPage = () => {
   };
 
   const openDetails = (g) => {
-    setSelectedGuest(g);
-    setActiveModal('details');
+    navigate(`/guests/${g.id}`);
+  };
+
+  // Compute linked reservations for selected guest
+  const getGuestStayHistory = (guestName) => {
+    if (!guestName) return [];
+    return reservations.filter(
+      (r) => r.guestName.toLowerCase().trim() === guestName.toLowerCase().trim()
+    );
   };
 
   // KPIs
@@ -202,27 +126,22 @@ export const GuestManagementPage = () => {
       {/* Module Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 04
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
-              Guest Directory & Management
-            </h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
+            Guest Directory & Management
+          </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Hotel guest identity records, contact details, ID proof verification, and live stay status.
+            Hotel guest identity records, contact details, ID proof verification, and linked reservation histories.
           </p>
         </div>
 
         <div className="flex items-center space-x-2 self-start sm:self-auto">
           <button
-            onClick={() => fetchGuestsFromApi(true)}
-            disabled={loading}
-            className="p-2.5 rounded-lg border border-slate-200 text-slate-600 hover:text-[#C5A059] hover:bg-slate-50 transition-all cursor-pointer"
-            title="Refresh Guest Data"
+            onClick={() => reloadDummyGuests(true)}
+            className="py-2.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#1E2B37] text-xs font-bold border border-slate-200 shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
+            title="Reload 30 guest profiles from DummyJSON API"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#C5A059]' : ''}`} />
+            <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
+            <span>Sync DummyJSON Users</span>
           </button>
 
           <button
@@ -248,60 +167,51 @@ export const GuestManagementPage = () => {
       </div>
 
       {/* KPI Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-          <SkeletonStatCard />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-[#1E2B37] flex items-center justify-center shrink-0">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Total Directory</span>
-              <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{totalCount}</span>
-              <span className="text-[11px] text-slate-500 font-medium block mt-0.5">Registered Profiles</span>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-[#1E2B37] flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6" />
           </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <UserCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Checked-In</span>
-              <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{checkedInCount}</span>
-              <span className="text-[11px] text-emerald-600 font-semibold block mt-0.5">Currently In-House</span>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <Clock className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Active Upcoming</span>
-              <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{activeCount}</span>
-              <span className="text-[11px] text-blue-600 font-semibold block mt-0.5">Upcoming Reservation</span>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-              <LogOut className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Checked-Out</span>
-              <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{checkedOutCount}</span>
-              <span className="text-[11px] text-slate-500 font-medium block mt-0.5">Completed Stays</span>
-            </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Total Directory</span>
+            <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{totalCount}</span>
+            <span className="text-[11px] text-slate-500 font-medium block mt-0.5">Registered Profiles</span>
           </div>
         </div>
-      )}
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <UserCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Checked-In</span>
+            <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{checkedInCount}</span>
+            <span className="text-[11px] text-emerald-600 font-semibold block mt-0.5">Currently In-House</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Active Upcoming</span>
+            <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{activeCount}</span>
+            <span className="text-[11px] text-blue-600 font-semibold block mt-0.5">Upcoming Reservation</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+            <LogOut className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Checked-Out</span>
+            <span className="font-['Poppins'] text-2xl font-extrabold text-[#1E2B37]">{checkedOutCount}</span>
+            <span className="text-[11px] text-slate-500 font-medium block mt-0.5">Completed Stays</span>
+          </div>
+        </div>
+      </div>
 
       {/* Filter Toolbar & Search */}
       <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
@@ -363,9 +273,7 @@ export const GuestManagementPage = () => {
       </div>
 
       {/* Main Content Area */}
-      {loading ? (
-        <SkeletonTable />
-      ) : filteredGuests.length === 0 ? (
+      {filteredGuests.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-xl border border-slate-200/80 space-y-3">
           <Users className="w-12 h-12 text-slate-300 mx-auto" />
           <h3 className="font-['Poppins'] text-base font-bold text-[#1E2B37]">No guest records found</h3>
@@ -422,7 +330,7 @@ export const GuestManagementPage = () => {
                     <td className="py-3.5 px-4 text-right space-x-1">
                       <button
                         onClick={() => openDetails(g)}
-                        title="View Guest Record"
+                        title="View Guest Record & Reservation History"
                         className="p-1.5 text-slate-600 hover:text-[#C5A059] hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
@@ -536,14 +444,14 @@ export const GuestManagementPage = () => {
       {/* MODAL WINDOWS */}
       {activeModal && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37] flex items-center space-x-2">
                 <Users className="w-5 h-5 text-[#C5A059]" />
                 <span>
                   {activeModal === 'add' && 'Create New Guest Record'}
                   {activeModal === 'edit' && `Edit Profile — ${selectedGuest?.fullName}`}
-                  {activeModal === 'details' && `Guest Profile — ${selectedGuest?.fullName}`}
+                  {activeModal === 'details' && `Guest Identity & Linked Stays — ${selectedGuest?.fullName}`}
                 </span>
               </h3>
               <button onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
@@ -553,6 +461,7 @@ export const GuestManagementPage = () => {
 
             {activeModal === 'details' ? (
               <div className="space-y-4 text-xs">
+                {/* Profile Overview */}
                 <div className="flex items-center space-x-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
                   <img
                     src={selectedGuest?.avatar}
@@ -582,7 +491,7 @@ export const GuestManagementPage = () => {
                     <p className="font-medium text-slate-700 truncate">{selectedGuest?.email}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase">ID Proof Number (Passport / DL)</span>
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase">ID Proof Number</span>
                     <p className="font-mono font-bold text-[#1E2B37]">{selectedGuest?.idProof}</p>
                   </div>
                   <div>
@@ -590,13 +499,41 @@ export const GuestManagementPage = () => {
                     <p className="font-semibold text-slate-700">{selectedGuest?.nationality}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Guest Status</span>
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase">Current Status</span>
                     <p className="font-bold text-emerald-600">{selectedGuest?.status}</p>
                   </div>
                   <div className="col-span-2">
                     <span className="text-[10px] text-slate-400 font-bold block uppercase">Residential Address</span>
                     <p className="font-medium text-slate-700">{selectedGuest?.address}</p>
                   </div>
+                </div>
+
+                {/* Linked Stay History */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <h5 className="font-['Poppins'] font-extrabold text-slate-800 text-xs flex items-center space-x-1.5">
+                    <CalendarCheck className="w-4 h-4 text-[#C5A059]" />
+                    <span>Linked Reservation History ({getGuestStayHistory(selectedGuest?.fullName).length})</span>
+                  </h5>
+
+                  {getGuestStayHistory(selectedGuest?.fullName).length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic">No past or active stay bookings recorded.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {getGuestStayHistory(selectedGuest?.fullName).map((stay) => (
+                        <div key={stay.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex justify-between items-center text-[11px]">
+                          <div>
+                            <span className="font-mono font-bold text-[#C5A059] block">{stay.id}</span>
+                            <span className="font-bold text-[#1E2B37] block">{stay.roomNumber} ({stay.roomType})</span>
+                            <span className="text-slate-400">{stay.checkIn} → {stay.checkOut}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-mono font-extrabold text-emerald-600 block">${stay.totalAmount}</span>
+                            <span className="text-[10px] font-bold uppercase text-slate-500">{stay.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -616,7 +553,7 @@ export const GuestManagementPage = () => {
                     value={guestForm.fullName}
                     onChange={(e) => setGuestForm({ ...guestForm, fullName: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
-                    placeholder="e.g. Mitchel Johnson"
+                    placeholder="e.g. Emily Johnson"
                   />
                 </div>
 
@@ -629,7 +566,7 @@ export const GuestManagementPage = () => {
                       value={guestForm.email}
                       onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
-                      placeholder="mitchel@example.com"
+                      placeholder="emily.johnson@x.dummyjson.com"
                     />
                   </div>
                   <div>

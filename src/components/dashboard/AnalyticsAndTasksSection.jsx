@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useHotel } from '../../contexts/HotelContext';
 import {
   ResponsiveContainer,
@@ -7,11 +7,18 @@ import {
   Cell,
   Tooltip,
 } from 'recharts';
-import { CheckCircle2, Circle, Plus, Star } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Star, X, Trash2 } from 'lucide-react';
 
 export const AnalyticsAndTasksSection = () => {
-  const { metrics, platformData, tasks, toggleTask, openModal } = useHotel();
+  const { metrics, platformData, tasks, toggleTask, addTask, deleteTask } = useHotel();
   const { rating } = metrics;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    category: 'housekeeping',
+    date: '2026-09-25',
+  });
 
   const ratingBars = [
     { label: 'Facilities', score: rating.facilities },
@@ -21,8 +28,20 @@ export const AnalyticsAndTasksSection = () => {
     { label: 'Location', score: rating.location },
   ];
 
+  const handleCreateTask = (e) => {
+    e.preventDefault();
+    if (!taskForm.title.trim()) return;
+    addTask({
+      title: taskForm.title.trim(),
+      category: taskForm.category,
+      date: taskForm.date,
+    });
+    setTaskForm({ title: '', category: 'housekeeping', date: '2026-09-25' });
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch relative">
       {/* 1. Overall Rating Card (4 cols) */}
       <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
         <div className="flex items-center justify-between">
@@ -103,16 +122,17 @@ export const AnalyticsAndTasksSection = () => {
         </div>
       </div>
 
-      {/* 3. Tasks Checklist Widget Card (4 cols) */}
+      {/* 3. Operational Tasks Checklist Widget Card (4 cols) */}
       <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-['Poppins'] text-sm font-bold text-[#1E2B37]">Operational Tasks</h3>
           <button
-            onClick={() => openModal('booking')}
-            className="p-1 rounded bg-[#C5A059] text-white hover:bg-[#b08d48] transition-colors cursor-pointer"
-            title="Add Task"
+            onClick={() => setIsModalOpen(true)}
+            className="p-1.5 rounded-lg bg-[#C5A059] text-white hover:bg-[#b08d48] transition-colors cursor-pointer shadow-xs flex items-center space-x-1 text-xs font-bold"
+            title="Add New Operational Task"
           >
             <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Task</span>
           </button>
         </div>
 
@@ -120,14 +140,16 @@ export const AnalyticsAndTasksSection = () => {
           {tasks.map((task) => (
             <div
               key={task.id}
-              onClick={() => toggleTask(task.id)}
-              className={`p-3 rounded-lg border transition-all cursor-pointer ${
+              className={`p-3 rounded-lg border transition-all flex items-start justify-between group ${
                 task.completed
                   ? 'bg-slate-50 border-slate-200 opacity-60'
                   : 'bg-[#F7F2E7]/60 border-amber-200/80 hover:border-[#C5A059]'
               }`}
             >
-              <div className="flex items-start space-x-2.5">
+              <div
+                onClick={() => toggleTask(task.id)}
+                className="flex items-start space-x-2.5 flex-1 cursor-pointer"
+              >
                 <button className="mt-0.5 shrink-0 cursor-pointer">
                   {task.completed ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-slate-400" />}
                 </button>
@@ -142,10 +164,102 @@ export const AnalyticsAndTasksSection = () => {
                   </p>
                 </div>
               </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteTask(task.id);
+                }}
+                className="text-slate-300 hover:text-rose-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0 ml-1"
+                title="Delete Task"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Add Task Modal Popup */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">
+                Add New Operational Task
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTask} className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Task Description / Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={taskForm.title}
+                  onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                  placeholder="e.g. Inspect & Clean Conference Room A..."
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Task Category</label>
+                  <select
+                    value={taskForm.category}
+                    onChange={(e) => setTaskForm({ ...taskForm, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
+                  >
+                    <option value="housekeeping">Housekeeping</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="event">Event / Catering</option>
+                    <option value="frontdesk">Front Desk</option>
+                    <option value="general">General Operational</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={taskForm.date}
+                    onChange={(e) => setTaskForm({ ...taskForm, date: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-[#C5A059] hover:bg-[#b08d48] text-white font-bold cursor-pointer shadow-xs"
+                >
+                  Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

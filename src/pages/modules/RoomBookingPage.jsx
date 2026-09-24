@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useHotel } from '../../contexts/HotelContext';
 import { toast } from 'react-toastify';
 import {
   CalendarCheck,
@@ -9,104 +11,30 @@ import {
   Clock,
   XCircle,
   UserCheck,
-  Calendar,
-  User,
-  BedDouble,
-  CreditCard,
   ChevronLeft,
   ChevronRight,
   Eye,
   X,
-  FileText,
-  LogOut,
   LayoutGrid,
   List,
-  Phone,
-  Mail,
-  ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 
 export const RoomBookingPage = () => {
-  const [reservations, setReservations] = useState([
-    {
-      id: 'RES-9012',
-      guestName: 'Mitchel Johnson',
-      guestEmail: 'mitchel@example.com',
-      guestPhone: '+99 256 896 8855',
-      roomNumber: '# No.101',
-      roomType: 'Presidential Suite',
-      checkIn: '2026-09-24',
-      checkOut: '2026-09-28',
-      nights: 4,
-      guests: '2 Adults, 1 Child',
-      totalAmount: 1000,
-      paymentStatus: 'Paid',
-      status: 'Confirmed',
-    },
-    {
-      id: 'RES-9013',
-      guestName: 'Robert Affleck',
-      guestEmail: 'robert@example.com',
-      guestPhone: '+81 569 854 8866',
-      roomNumber: '# No.102',
-      roomType: 'Deluxe Suite',
-      checkIn: '2026-09-23',
-      checkOut: '2026-09-26',
-      nights: 3,
-      guests: '2 Adults',
-      totalAmount: 420,
-      paymentStatus: 'Paid',
-      status: 'Checked-In',
-    },
-    {
-      id: 'RES-9014',
-      guestName: 'Sarah Wilson',
-      guestEmail: 'sarah@example.com',
-      guestPhone: '+1 408 923 1188',
-      roomNumber: '# No.201',
-      roomType: 'Executive Room',
-      checkIn: '2026-09-25',
-      checkOut: '2026-09-30',
-      nights: 5,
-      guests: '3 Adults',
-      totalAmount: 825,
-      paymentStatus: 'Pending',
-      status: 'Confirmed',
-    },
-    {
-      id: 'RES-9015',
-      guestName: 'Alexander Wright',
-      guestEmail: 'alexander@example.com',
-      guestPhone: '+1 555 019 2831',
-      roomNumber: '# No.202',
-      roomType: 'Standard Room',
-      checkIn: '2026-09-20',
-      checkOut: '2026-09-23',
-      nights: 3,
-      guests: '1 Adult',
-      totalAmount: 285,
-      paymentStatus: 'Paid',
-      status: 'Completed',
-    },
-    {
-      id: 'RES-9016',
-      guestName: 'Elena Rostova',
-      guestEmail: 'elena@example.com',
-      guestPhone: '+44 791 112 3456',
-      roomNumber: '# No.301',
-      roomType: 'Presidential Suite',
-      checkIn: '2026-09-26',
-      checkOut: '2026-09-27',
-      nights: 1,
-      guests: '2 Adults',
-      totalAmount: 280,
-      paymentStatus: 'Refunded',
-      status: 'Cancelled',
-    },
-  ]);
+  const navigate = useNavigate();
+  const {
+    reservations,
+    rooms,
+    guests,
+    addReservation,
+    checkInReservation,
+    checkOutReservation,
+    cancelReservation,
+  } = useHotel();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [modalGuestSearch, setModalGuestSearch] = useState('');
+  const [isGuestDropdownOpen, setIsGuestDropdownOpen] = useState(false);
+  const [isGuestSelected, setIsGuestSelected] = useState(true);
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterPayment, setFilterPayment] = useState('All');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
@@ -116,20 +44,46 @@ export const RoomBookingPage = () => {
   const [activeModal, setActiveModal] = useState(null); // 'add' | 'details'
   const [selectedRes, setSelectedRes] = useState(null);
 
+  // Filtered guests for modal dropdown
+  const modalFilteredGuests = guests.filter((g) => {
+    const q = modalGuestSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      g.fullName.toLowerCase().includes(q) ||
+      g.email.toLowerCase().includes(q) ||
+      g.mobile.includes(q) ||
+      (g.idProof && g.idProof.toLowerCase().includes(q))
+    );
+  });
+
+  // Available rooms for selection dropdown (only rooms with status === 'Available')
+  const availableRoomsForBooking = rooms.filter((r) => r.status === 'Available');
+
   const [bookingForm, setBookingForm] = useState({
     guestName: '',
     guestEmail: '',
     guestPhone: '',
-    roomNumber: '# No.101',
-    roomType: 'Presidential Suite',
+    roomId: availableRoomsForBooking[0]?.id || 101,
+    roomNumber: availableRoomsForBooking[0]?.number || '# No.101',
+    roomType: availableRoomsForBooking[0]?.type || 'Presidential Suite',
+    pricePerNight: availableRoomsForBooking[0]?.price || 250,
     checkIn: '2026-09-25',
     checkOut: '2026-09-28',
-    guests: '2 Adults',
-    pricePerNight: 250,
+    guestCount: '2 Adults',
     paymentStatus: 'Paid',
   });
 
-  // Calculate nights & total automatically
+  // Helper to resolve linked guest profile from HotelContext
+  const getGuestForRes = (resItem) => {
+    if (!resItem) return null;
+    return guests.find(
+      (g) =>
+        g.fullName?.toLowerCase()?.trim() === resItem.guestName?.toLowerCase()?.trim() ||
+        (resItem.guestEmail && g.email?.toLowerCase()?.trim() === resItem.guestEmail?.toLowerCase()?.trim())
+    );
+  };
+
+  // Calculate nights
   const calculateNights = (start, end) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -145,7 +99,7 @@ export const RoomBookingPage = () => {
       r.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.roomType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.guestEmail.toLowerCase().includes(searchQuery.toLowerCase());
+      (r.guestEmail && r.guestEmail.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus = filterStatus === 'All' || r.status === filterStatus;
     const matchesPayment = filterPayment === 'All' || r.paymentStatus === filterPayment;
@@ -159,49 +113,47 @@ export const RoomBookingPage = () => {
     currentPage * itemsPerPage
   );
 
-  // Create Reservation Handler
+  // Create Reservation Handler using HotelContext
   const handleCreateReservation = (e) => {
     e.preventDefault();
+
+    if (availableRoomsForBooking.length === 0) {
+      toast.error('No available rooms currently to book.');
+      return;
+    }
+
     const nights = calculateNights(bookingForm.checkIn, bookingForm.checkOut);
     const totalAmount = nights * Number(bookingForm.pricePerNight);
 
-    const newRes = {
-      id: `RES-${Math.floor(9017 + Math.random() * 100)}`,
+    addReservation({
       guestName: bookingForm.guestName,
-      guestEmail: bookingForm.guestEmail || `${bookingForm.guestName.toLowerCase().replace(/\s+/g, '')}@example.com`,
+      guestEmail: bookingForm.guestEmail || `${bookingForm.guestName.toLowerCase().replace(/\s+/g, '')}@x.dummyjson.com`,
       guestPhone: bookingForm.guestPhone || '+1 555 019 9999',
       roomNumber: bookingForm.roomNumber,
       roomType: bookingForm.roomType,
       checkIn: bookingForm.checkIn,
       checkOut: bookingForm.checkOut,
       nights: nights,
-      guests: bookingForm.guests,
+      guests: bookingForm.guestCount,
       totalAmount: totalAmount,
       paymentStatus: bookingForm.paymentStatus,
       status: 'Confirmed',
-    };
+    });
 
-    setReservations([newRes, ...reservations]);
     setActiveModal(null);
-    toast.success(`Reservation ${newRes.id} created successfully for ${newRes.guestName}!`);
   };
 
-  // Status Change Handlers
+  // Status Action Handlers using HotelContext
   const handleCheckIn = (res) => {
-    setReservations(reservations.map((r) => (r.id === res.id ? { ...r, status: 'Checked-In' } : r)));
-    toast.success(`Guest ${res.guestName} checked in to Room ${res.roomNumber}!`);
+    checkInReservation(res.id);
   };
 
   const handleCheckOut = (res) => {
-    setReservations(reservations.map((r) => (r.id === res.id ? { ...r, status: 'Completed' } : r)));
-    toast.info(`Guest ${res.guestName} checked out. Room ${res.roomNumber} marked for cleaning.`);
+    checkOutReservation(res.id);
   };
 
   const handleCancelReservation = (res) => {
-    setReservations(
-      reservations.map((r) => (r.id === res.id ? { ...r, status: 'Cancelled', paymentStatus: 'Refunded' } : r))
-    );
-    toast.error(`Reservation ${res.id} for ${res.guestName} has been cancelled.`);
+    cancelReservation(res.id);
   };
 
   // KPIs
@@ -216,14 +168,9 @@ export const RoomBookingPage = () => {
       {/* Module Title Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#C5A059] text-white uppercase">
-              Module 05
-            </span>
-            <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
-              Reservations & Booking Engine
-            </h2>
-          </div>
+          <h2 className="font-['Poppins'] text-xl font-extrabold text-[#1E2B37]">
+            Reservations & Booking Engine
+          </h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Manage advance room bookings, express check-in/out workflows, stay durations, and folio balances.
           </p>
@@ -231,16 +178,21 @@ export const RoomBookingPage = () => {
 
         <button
           onClick={() => {
+            const firstAvail = availableRoomsForBooking[0];
+            setModalGuestSearch('');
+            setIsGuestSelected(true);
+            setIsGuestDropdownOpen(false);
             setBookingForm({
-              guestName: '',
-              guestEmail: '',
-              guestPhone: '',
-              roomNumber: '# No.101',
-              roomType: 'Presidential Suite',
+              guestName: guests[0]?.fullName || 'Emily Johnson',
+              guestEmail: guests[0]?.email || 'emily.johnson@x.dummyjson.com',
+              guestPhone: guests[0]?.mobile || '+81 965-431-3024',
+              roomId: firstAvail?.id || 101,
+              roomNumber: firstAvail?.number || '# No.101',
+              roomType: firstAvail?.type || 'Presidential Suite',
+              pricePerNight: firstAvail?.price || 250,
               checkIn: '2026-09-25',
               checkOut: '2026-09-28',
-              guests: '2 Adults',
-              pricePerNight: 250,
+              guestCount: '2 Adults',
               paymentStatus: 'Paid',
             });
             setActiveModal('add');
@@ -408,10 +360,20 @@ export const RoomBookingPage = () => {
                 {paginatedReservations.map((res) => (
                   <tr key={res.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div>
-                        <span className="font-mono text-[11px] text-[#C5A059] font-bold block">{res.id}</span>
-                        <span className="font-['Poppins'] font-bold text-slate-800 text-sm block">{res.guestName}</span>
-                        <span className="text-[11px] text-slate-400 block">{res.guestPhone}</span>
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={
+                            getGuestForRes(res)?.avatar ||
+                            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+                          }
+                          alt={res.guestName}
+                          className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                        />
+                        <div>
+                          <span className="font-mono text-[11px] text-[#C5A059] font-bold block">{res.id}</span>
+                          <span className="font-['Poppins'] font-bold text-slate-800 text-sm block">{res.guestName}</span>
+                          <span className="text-[11px] text-slate-400 block">{res.guestEmail || res.guestPhone}</span>
+                        </div>
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
@@ -484,10 +446,7 @@ export const RoomBookingPage = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          setSelectedRes(res);
-                          setActiveModal('details');
-                        }}
+                        onClick={() => navigate(`/reservations/${res.id}`)}
                         className="p-1.5 text-slate-600 hover:text-[#C5A059] hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
                         title="View Reservation Folio"
                       >
@@ -505,11 +464,21 @@ export const RoomBookingPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedReservations.map((res) => (
             <div key={res.id} className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs space-y-4 hover:shadow-md transition-shadow relative">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="font-mono text-xs text-[#C5A059] font-bold block">{res.id}</span>
-                  <h4 className="font-['Poppins'] font-extrabold text-base text-[#1E2B37] leading-snug">{res.guestName}</h4>
-                  <span className="text-xs text-slate-400 font-mono block">{res.guestPhone}</span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={
+                      getGuestForRes(res)?.avatar ||
+                      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+                    }
+                    alt={res.guestName}
+                    className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+                  />
+                  <div>
+                    <span className="font-mono text-xs text-[#C5A059] font-bold block">{res.id}</span>
+                    <h4 className="font-['Poppins'] font-extrabold text-base text-[#1E2B37] leading-snug">{res.guestName}</h4>
+                    <span className="text-xs text-slate-400 font-mono block">{res.guestEmail || res.guestPhone}</span>
+                  </div>
                 </div>
                 <span
                   className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
@@ -543,10 +512,7 @@ export const RoomBookingPage = () => {
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <button
-                  onClick={() => {
-                    setSelectedRes(res);
-                    setActiveModal('details');
-                  }}
+                  onClick={() => navigate(`/reservations/${res.id}`)}
                   className="text-xs text-[#C5A059] font-bold hover:underline flex items-center space-x-1 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -603,113 +569,224 @@ export const RoomBookingPage = () => {
       )}
 
       {/* MODALS */}
-      {activeModal && (
+      {activeModal === 'add' && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">
-                {activeModal === 'add' ? 'Create New Reservation' : `Reservation Folio — ${selectedRes?.id}`}
+                Create New Reservation
               </h3>
               <button onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {activeModal === 'details' ? (
-              <div className="space-y-4 text-xs">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
-                  <div className="flex justify-between items-start pb-2 border-b border-slate-200">
-                    <div>
-                      <h4 className="font-['Poppins'] text-base font-extrabold text-[#1E2B37]">{selectedRes?.guestName}</h4>
-                      <p className="text-slate-500 font-mono">{selectedRes?.guestEmail} • {selectedRes?.guestPhone}</p>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-[#C5A059]">{selectedRes?.id}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700">
-                    <p><strong>Reserved Room:</strong> {selectedRes?.roomNumber}</p>
-                    <p><strong>Room Category:</strong> {selectedRes?.roomType}</p>
-                    <p><strong>Check-In Date:</strong> {selectedRes?.checkIn}</p>
-                    <p><strong>Check-Out Date:</strong> {selectedRes?.checkOut}</p>
-                    <p><strong>Stay Nights:</strong> {selectedRes?.nights} Nights</p>
-                    <p><strong>Occupancy:</strong> {selectedRes?.guests}</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
-                    <span>Total Folio Bill:</span>
-                    <span className="font-mono text-emerald-600 text-base">${selectedRes?.totalAmount} ({selectedRes?.paymentStatus})</span>
-                  </div>
-                </div>
-
-                <button onClick={() => setActiveModal(null)} className="w-full py-2.5 rounded-lg bg-[#1E2B37] text-white font-bold cursor-pointer">
-                  Close Folio Window
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleCreateReservation} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateReservation} className="space-y-3 text-xs">
+                {/* ADVANCED USER-FRIENDLY GUEST SEARCH & SELECT COMBOBOX */}
                 <div>
-                  <label className="font-bold text-slate-600 block mb-1">Guest Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={bookingForm.guestName}
-                    onChange={(e) => setBookingForm({ ...bookingForm, guestName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-[#1E2B37]"
-                    placeholder="e.g. Mitchel Johnson"
-                  />
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="font-bold text-slate-700 block text-xs">
+                      Guest Profile Selection <span className="text-rose-500">*</span>
+                    </label>
+                    {isGuestSelected && (
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center space-x-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Guest Verified</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {isGuestSelected && bookingForm.guestName ? (
+                    /* Rich Locked-In Selected Guest Card */
+                    <div className="p-3 bg-[#F7F2E7]/80 rounded-xl border border-[#C5A059]/40 flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <img
+                          src={
+                            guests.find((g) => g.fullName === bookingForm.guestName)?.avatar ||
+                            'https://dummyjson.com/icon/emilyj/128'
+                          }
+                          alt={bookingForm.guestName}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-[#C5A059] shrink-0 shadow-2xs"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-['Poppins'] text-xs font-extrabold text-[#1E2B37] truncate">
+                              {bookingForm.guestName}
+                            </h4>
+                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200 shrink-0">
+                              {guests.find((g) => g.fullName === bookingForm.guestName)?.idProof || 'ID Verified'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 font-mono truncate mt-0.5">
+                            {bookingForm.guestEmail} • {bookingForm.guestPhone}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsGuestSelected(false);
+                          setIsGuestDropdownOpen(true);
+                          setModalGuestSearch('');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#1E2B37] text-[11px] font-bold border border-slate-200 shadow-2xs transition-all flex items-center space-x-1 cursor-pointer shrink-0 ml-2"
+                        title="Search or Pick another guest"
+                      >
+                        <Search className="w-3 h-3 text-[#C5A059]" />
+                        <span>Change Guest</span>
+                      </button>
+                    </div>
+                  ) : (
+                    /* Real-Time Interactive Search Combobox Input & Floating Dropdown */
+                    <div className="relative">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={modalGuestSearch}
+                          onFocus={() => setIsGuestDropdownOpen(true)}
+                          onChange={(e) => {
+                            setModalGuestSearch(e.target.value);
+                            setIsGuestDropdownOpen(true);
+                          }}
+                          placeholder="Type guest name, email, phone number, or ID..."
+                          className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-slate-50 border-2 border-[#C5A059]/60 text-xs text-[#1E2B37] focus:outline-none focus:border-[#C5A059] font-semibold shadow-xs"
+                        />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#C5A059]" />
+                        {modalGuestSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setModalGuestSearch('')}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Floating Autocomplete Results Dropdown Menu */}
+                      {isGuestDropdownOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100 text-xs">
+                          <div className="p-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 backdrop-blur-xs">
+                            <span>Matching Guest Profiles</span>
+                            <span>{modalFilteredGuests.length} Results</span>
+                          </div>
+
+                          {modalFilteredGuests.length === 0 ? (
+                            <div className="p-4 text-center space-y-2">
+                              <p className="text-slate-500 font-medium text-xs">No registered guest matching "{modalGuestSearch}"</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newName = modalGuestSearch || 'New Guest';
+                                  setBookingForm({
+                                    ...bookingForm,
+                                    guestName: newName,
+                                    guestEmail: `${newName.toLowerCase().replace(/\s+/g, '')}@x.dummyjson.com`,
+                                    guestPhone: '+1 555 019 9999',
+                                  });
+                                  setIsGuestSelected(true);
+                                  setIsGuestDropdownOpen(false);
+                                }}
+                                className="px-3 py-1.5 rounded-lg bg-[#C5A059] text-white text-xs font-bold shadow-xs hover:bg-[#b08d48] cursor-pointer inline-flex items-center space-x-1"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Use "{modalGuestSearch}" as Guest</span>
+                              </button>
+                            </div>
+                          ) : (
+                            modalFilteredGuests.map((g) => (
+                              <div
+                                key={g.id}
+                                onClick={() => {
+                                  setBookingForm({
+                                    ...bookingForm,
+                                    guestName: g.fullName,
+                                    guestEmail: g.email,
+                                    guestPhone: g.mobile,
+                                  });
+                                  setIsGuestSelected(true);
+                                  setIsGuestDropdownOpen(false);
+                                }}
+                                className="p-2.5 hover:bg-[#F7F2E7] cursor-pointer flex items-center justify-between transition-colors group"
+                              >
+                                <div className="flex items-center space-x-3 min-w-0">
+                                  <img
+                                    src={g.avatar || 'https://dummyjson.com/icon/emilyj/128'}
+                                    alt={g.fullName}
+                                    className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 group-hover:border-[#C5A059]"
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="font-['Poppins'] font-bold text-[#1E2B37] group-hover:text-[#C5A059] block leading-snug truncate">
+                                      {g.fullName}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                                      {g.email} • {g.mobile}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0 ml-2">
+                                  <span
+                                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                      g.status === 'Checked-In'
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : g.status === 'Active'
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {g.status}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
+                {/* Available Rooms Dropdown (Shows ONLY Available rooms) */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-600 block mb-1">Guest Email</label>
-                    <input
-                      type="email"
-                      value={bookingForm.guestEmail}
-                      onChange={(e) => setBookingForm({ ...bookingForm, guestEmail: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-[#1E2B37]"
-                      placeholder="guest@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-600 block mb-1">Guest Mobile</label>
-                    <input
-                      type="text"
-                      value={bookingForm.guestPhone}
-                      onChange={(e) => setBookingForm({ ...bookingForm, guestPhone: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-[#1E2B37]"
-                      placeholder="+1 555 019 9999"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-600 block mb-1">Select Suite / Room</label>
-                    <select
-                      value={bookingForm.roomNumber}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        let type = 'Presidential Suite';
-                        let price = 250;
-                        if (val === '# No.102') { type = 'Deluxe Suite'; price = 140; }
-                        if (val === '# No.201') { type = 'Executive Room'; price = 165; }
-                        if (val === '# No.202') { type = 'Standard Room'; price = 95; }
-                        setBookingForm({ ...bookingForm, roomNumber: val, roomType: type, pricePerNight: price });
-                      }}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 font-semibold text-[#1E2B37]"
-                    >
-                      <option value="# No.101"># No.101 - Presidential Suite ($250/night)</option>
-                      <option value="# No.102"># No.102 - Deluxe Suite ($140/night)</option>
-                      <option value="# No.201"># No.201 - Executive Room ($165/night)</option>
-                      <option value="# No.202"># No.202 - Standard Room ($95/night)</option>
-                    </select>
+                    <label className="font-bold text-slate-600 block mb-1">Select Available Room</label>
+                    {availableRoomsForBooking.length === 0 ? (
+                      <p className="text-rose-600 text-[11px] font-bold">No rooms available currently!</p>
+                    ) : (
+                      <select
+                        value={bookingForm.roomNumber}
+                        onChange={(e) => {
+                          const rNum = e.target.value;
+                          const matchedR = availableRoomsForBooking.find((r) => r.number === rNum);
+                          if (matchedR) {
+                            setBookingForm({
+                              ...bookingForm,
+                              roomId: matchedR.id,
+                              roomNumber: matchedR.number,
+                              roomType: matchedR.type,
+                              pricePerNight: matchedR.price,
+                            });
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 font-semibold text-[#1E2B37]"
+                      >
+                        {availableRoomsForBooking.map((r) => (
+                          <option key={r.id} value={r.number}>
+                            {r.number} - {r.type} (${r.price}/night)
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="font-bold text-slate-600 block mb-1">Occupants / Guests</label>
                     <input
                       type="text"
-                      value={bookingForm.guests}
-                      onChange={(e) => setBookingForm({ ...bookingForm, guests: e.target.value })}
+                      value={bookingForm.guestCount}
+                      onChange={(e) => setBookingForm({ ...bookingForm, guestCount: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-[#1E2B37]"
                       placeholder="e.g. 2 Adults, 1 Child"
                     />
@@ -739,6 +816,21 @@ export const RoomBookingPage = () => {
                   </div>
                 </div>
 
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200/80 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="text-slate-500 block">Calculated Duration:</span>
+                    <span className="font-bold text-[#1E2B37]">
+                      {calculateNights(bookingForm.checkIn, bookingForm.checkOut)} Nights @ ${bookingForm.pricePerNight}/night
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-500 block">Total Cost:</span>
+                    <span className="font-mono font-extrabold text-emerald-600 text-sm">
+                      ${calculateNights(bookingForm.checkIn, bookingForm.checkOut) * Number(bookingForm.pricePerNight)}
+                    </span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="font-bold text-slate-600 block mb-1">Payment Status</label>
                   <select
@@ -751,14 +843,17 @@ export const RoomBookingPage = () => {
                   </select>
                 </div>
 
-                <button type="submit" className="w-full py-3 rounded-lg bg-[#C5A059] hover:bg-[#b08d48] text-white font-bold mt-2 cursor-pointer shadow-md">
+                <button
+                  type="submit"
+                  disabled={availableRoomsForBooking.length === 0}
+                  className="w-full py-3 rounded-lg bg-[#C5A059] hover:bg-[#b08d48] disabled:opacity-50 text-white font-bold mt-2 cursor-pointer shadow-md transition-all"
+                >
                   Confirm & Create Reservation
                 </button>
               </form>
-            )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+      </div>
+    );
+  };
