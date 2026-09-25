@@ -39,7 +39,7 @@ export const Sidebar = () => {
     { name: 'Payments & Billing', path: '/payments', icon: CreditCard },
     { name: 'Booking History', path: '/history', icon: History },
     { name: 'Analytics & Reports', path: '/reports', icon: FileText },
-    { name: 'System Settings', path: '/settings', icon: Settings },
+    { name: 'Settings', path: '/settings', icon: Settings },
   ];
 
   return (

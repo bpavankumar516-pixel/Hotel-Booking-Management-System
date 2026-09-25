@@ -882,14 +882,145 @@ export const HotelProvider = ({ children }) => {
     },
   };
 
-  const recentEnquiries = [
-    { id: 1, name: 'Micheal M', tag: 'BOOKINGS', tagColor: '#1E2B37', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150' },
-    { id: 2, name: 'Peterson K', tag: 'AMENITIES', tagColor: '#2563EB', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150' },
-    { id: 3, name: 'Johnson T', tag: 'PAYMENTS', tagColor: '#1E2B37', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150' },
-    { id: 4, name: 'Albert G', tag: 'CHECKOUT', tagColor: '#2563EB', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
-    { id: 5, name: 'Thomas R', tag: 'PAYMENTS', tagColor: '#1E2B37', avatar: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?w=150' },
-    { id: 6, name: 'Hendry W', tag: 'CANCELLATION', tagColor: '#DC2626', avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150' },
-  ];
+  // Dynamic State for Guest Enquiries with LocalStorage Persistence
+  const [enquiries, setEnquiries] = useState(() => {
+    const saved = localStorage.getItem('grand_horizon_enquiries');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 'ENQ-1001',
+            name: 'Michael Peterson',
+            email: 'michael.p@gmail.com',
+            mobile: '+1 555 019 9821',
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+            tag: 'BOOKINGS',
+            tagColor: '#1E2B37',
+            subject: 'Late Check-out & Airport Shuttle Request',
+            message: 'Hello Grand Horizon team! We will be arriving on flight AA-920 at 2:30 PM. Could you please arrange an executive airport transfer and confirm if a 2 PM late check-out is possible for our suite?',
+            status: 'Pending',
+            replyText: '',
+            time: '12 mins ago',
+          },
+          {
+            id: 'ENQ-1002',
+            name: 'Sarah Peterson',
+            email: 'sarah.k@yahoo.com',
+            mobile: '+1 555 019 8812',
+            avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150',
+            tag: 'AMENITIES',
+            tagColor: '#3B82F6',
+            subject: 'Spa Jacuzzi & Dietary Preferences',
+            message: 'Hi! I wanted to check if gluten-free options are available for in-room breakfast service, and if we can pre-book a private spa session for tomorrow evening?',
+            status: 'Replied',
+            replyText: 'Dear Sarah, gluten-free breakfast items are fully supported. We have reserved Spa Suite 2 for tomorrow evening at 7:00 PM.',
+            time: '35 mins ago',
+          },
+          {
+            id: 'ENQ-1003',
+            name: 'Robert Johnson',
+            email: 'robert.j@corp.com',
+            mobile: '+1 555 019 7723',
+            avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+            tag: 'PAYMENTS',
+            tagColor: '#1E2B37',
+            subject: 'Invoice & Folio Payment Confirmation',
+            message: 'Dear Reception, please send the itemized invoice for reservation RES-9014 to my business email address for company reimbursement processing.',
+            status: 'Pending',
+            replyText: '',
+            time: '1 hour ago',
+          },
+          {
+            id: 'ENQ-1004',
+            name: 'Albert Garcia',
+            email: 'albert.g@tech.io',
+            mobile: '+1 555 019 6634',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            tag: 'CHECKOUT',
+            tagColor: '#3B82F6',
+            subject: 'Express Check-In & Extra Keys',
+            message: 'Good morning! We are driving from Phoenix and expecting early arrival around 11:30 AM. Is express check-in available for room #101?',
+            status: 'Pending',
+            replyText: '',
+            time: '2 hours ago',
+          },
+          {
+            id: 'ENQ-1005',
+            name: 'Thomas Reed',
+            email: 'thomas.r@outlook.com',
+            mobile: '+1 555 019 5545',
+            avatar: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?w=150',
+            tag: 'RESERVATION',
+            tagColor: '#C5A059',
+            subject: 'Conference Room & High-Speed WiFi',
+            message: 'Hello, we require high-speed fiber WiFi access codes for 4 laptops and access to Conference Room B for a virtual board meeting tomorrow morning.',
+            status: 'Replied',
+            replyText: 'Hi Thomas! Fiber WiFi login passes and Conference Room B have been configured for your team starting at 9:00 AM.',
+            time: '3 hours ago',
+          },
+          {
+            id: 'ENQ-1006',
+            name: 'Hendry Williams',
+            email: 'hendry.w@gmail.com',
+            mobile: '+1 555 019 4456',
+            avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+            tag: 'CANCELLATION',
+            tagColor: '#EF4444',
+            subject: 'Cancellation & Refund Status',
+            message: 'Hi, I received notification for reservation cancellation RES-9016. Kindly confirm when the refund credit will reflect on my Visa card.',
+            status: 'Pending',
+            replyText: '',
+            time: '5 hours ago',
+          },
+        ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('grand_horizon_enquiries', JSON.stringify(enquiries));
+  }, [enquiries]);
+
+  // Enquiry Management Handlers
+  const addEnquiry = (newEnq) => {
+    const formatted = {
+      id: `ENQ-${Date.now().toString().slice(-4)}`,
+      name: newEnq.name || 'Guest User',
+      email: newEnq.email || 'guest@grandhorizon.com',
+      mobile: newEnq.mobile || '+1 555 000 0000',
+      avatar: newEnq.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      tag: newEnq.tag || 'GENERAL',
+      tagColor: newEnq.tagColor || '#C5A059',
+      subject: newEnq.subject || 'Guest Service Inquiry',
+      message: newEnq.message || '',
+      status: 'Pending',
+      replyText: '',
+      time: 'Just now',
+    };
+
+    setEnquiries((prev) => [formatted, ...prev]);
+
+    if (addNotification) {
+      addNotification({
+        title: 'New Guest Enquiry Registered',
+        text: `Logged new inquiry from ${formatted.name}: "${formatted.subject}"`,
+        category: 'reservation',
+      });
+    }
+
+    toast.success(`Registered new guest enquiry for ${formatted.name}!`);
+  };
+
+  const replyToEnquiry = (id, replyText) => {
+    setEnquiries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, status: 'Replied', replyText: replyText } : e))
+    );
+
+    toast.success(`Official response sent & saved for enquiry ${id}!`);
+  };
+
+  const deleteEnquiry = (id) => {
+    setEnquiries((prev) => prev.filter((e) => e.id !== id));
+    toast.info(`Deleted enquiry record ${id}.`);
+  };
 
   const bookingStatusChartData = [
     { month: 'Jan', Bookings: 25, Enquiries: 35 },
@@ -909,6 +1040,29 @@ export const HotelProvider = ({ children }) => {
     { name: 'Booking.com', value: 12, color: '#1E2B37' },
     { name: 'Airbnb', value: 18, color: '#2563EB' },
     { name: 'Agoda', value: 9, color: '#10B981' },
+  ];
+
+  const revenueData = [
+    { month: 'Jan', revenue: 18500, bookings: 22 },
+    { month: 'Feb', revenue: 24200, bookings: 31 },
+    { month: 'Mar', revenue: 31800, bookings: 45 },
+    { month: 'Apr', revenue: 28900, bookings: 38 },
+    { month: 'May', revenue: 42500, bookings: 56 },
+    { month: 'Jun', revenue: 48900, bookings: 64 },
+    { month: 'Jul', revenue: 56200, bookings: 78 },
+    { month: 'Aug', revenue: 51800, bookings: 71 },
+    { month: 'Sep', revenue: 45000 + (totalRevenue || 0), bookings: 60 + (reservations?.length || 0) },
+    { month: 'Oct', revenue: 49500, bookings: 65 },
+  ];
+
+  const reservationsChartData = [
+    { day: 'Mon', booked: 12, canceled: 2, checkedIn: 10 },
+    { day: 'Tue', booked: 18, canceled: 3, checkedIn: 15 },
+    { day: 'Wed', booked: 25, canceled: 1, checkedIn: 22 },
+    { day: 'Thu', booked: 22, canceled: 4, checkedIn: 18 },
+    { day: 'Fri', booked: 32, canceled: 2, checkedIn: 28 },
+    { day: 'Sat', booked: 38, canceled: 5, checkedIn: 33 },
+    { day: 'Sun', booked: 28, canceled: 3, checkedIn: 24 },
   ];
 
   const [notifications, setNotifications] = useState(() => {
@@ -962,11 +1116,17 @@ export const HotelProvider = ({ children }) => {
         metrics,
         rating,
         platformData,
+        revenueData,
+        reservationsChartData,
         tasks,
         toggleTask,
         addTask,
         deleteTask,
-        recentEnquiries,
+        enquiries,
+        recentEnquiries: enquiries,
+        addEnquiry,
+        replyToEnquiry,
+        deleteEnquiry,
         bookingStatusChartData,
         notifications,
         addNotification,

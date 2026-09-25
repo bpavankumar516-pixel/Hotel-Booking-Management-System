@@ -10,8 +10,23 @@ import {
 import { CheckCircle2, Circle, Plus, Star, X, Trash2 } from 'lucide-react';
 
 export const AnalyticsAndTasksSection = () => {
-  const { metrics, platformData, tasks, toggleTask, addTask, deleteTask } = useHotel();
+  const { metrics, reservations = [], tasks, toggleTask, addTask, deleteTask } = useHotel();
   const { rating } = metrics;
+
+  // Compute dynamic reservation status breakdown
+  const statusCounts = reservations.reduce((acc, r) => {
+    acc[r.status] = (acc[r.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const totalResCount = reservations.length || 1;
+
+  const reservationStatusData = [
+    { name: 'Confirmed', count: statusCounts['Confirmed'] || 0, percent: Math.round(((statusCounts['Confirmed'] || 0) / totalResCount) * 100), color: '#C5A059' },
+    { name: 'Checked-In', count: statusCounts['Checked-In'] || 0, percent: Math.round(((statusCounts['Checked-In'] || 0) / totalResCount) * 100), color: '#10B981' },
+    { name: 'Completed', count: statusCounts['Completed'] || 0, percent: Math.round(((statusCounts['Completed'] || 0) / totalResCount) * 100), color: '#3B82F6' },
+    { name: 'Cancelled', count: statusCounts['Cancelled'] || 0, percent: Math.round(((statusCounts['Cancelled'] || 0) / totalResCount) * 100), color: '#EF4444' },
+  ];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskForm, setTaskForm] = useState({
@@ -78,45 +93,62 @@ export const AnalyticsAndTasksSection = () => {
         </div>
       </div>
 
-      {/* 2. Booking by Platform Donut Chart Card (4 cols) */}
+      {/* 2. Reservation Status Share Donut Chart Card (4 cols) */}
       <div className="lg:col-span-4 bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-['Poppins'] text-sm font-bold text-[#1E2B37]">Booking by Platform</h3>
+        <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+          <div>
+            <h3 className="font-['Poppins'] text-sm font-bold text-[#1E2B37]">Reservation Status Share</h3>
+            <p className="text-[10px] text-slate-400 font-medium">Proportional stay lifecycle distribution</p>
+          </div>
+          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-amber-50 text-[#C5A059] border border-amber-200 font-mono">
+            {reservations.length} Bookings
+          </span>
         </div>
 
-        <div className="relative h-44 w-full flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="relative min-h-[180px] h-[180px] w-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie
-                data={platformData}
+                data={reservationStatusData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
+                innerRadius={46}
                 outerRadius={70}
                 paddingAngle={4}
-                dataKey="value"
+                dataKey="count"
               >
-                {platformData.map((entry, index) => (
+                {reservationStatusData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', fontSize: '12px' }}
-                formatter={(val) => [`${val}%`, 'Share']}
+                contentStyle={{ backgroundColor: '#1E2B37', borderColor: '#334155', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+                formatter={(val, name) => [`${val} Bookings`, name]}
               />
             </PieChart>
           </ResponsiveContainer>
+          {/* Center Donut Ring Badge */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="font-['Poppins'] text-lg font-black text-[#1E2B37] leading-none">
+              {reservations.length}
+            </span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+              Stays
+            </span>
+          </div>
         </div>
 
         {/* Legend Grid */}
         <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
-          {platformData.map((p, idx) => (
-            <div key={idx} className="flex items-center justify-between">
+          {reservationStatusData.map((p, idx) => (
+            <div key={idx} className="flex items-center justify-between p-1.5 rounded-lg border border-slate-100 bg-slate-50/80">
               <div className="flex items-center space-x-1.5 truncate">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-                <span className="text-slate-500 text-[11px] truncate font-medium">{p.name}</span>
+                <span className="text-[#1E2B37] text-[11px] truncate font-bold">{p.name}</span>
               </div>
-              <span className="font-['Poppins'] font-bold text-[#1E2B37] text-[11px] font-mono ml-1">{p.value}%</span>
+              <span className="font-['Poppins'] font-extrabold text-[#1E2B37] text-[11px] font-mono ml-1">
+                {p.count} <span className="text-[9px] text-slate-400 font-normal">({p.percent}%)</span>
+              </span>
             </div>
           ))}
         </div>

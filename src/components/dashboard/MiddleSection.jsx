@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHotel } from '../../contexts/HotelContext';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { ArrowUpRight, ChevronDown, ChevronRight, X, MessageSquare, Send, CalendarCheck, CheckCircle2 } from 'lucide-react';
@@ -7,9 +7,18 @@ import { toast } from 'react-toastify';
 
 export const MiddleSection = () => {
   const navigate = useNavigate();
-  const { recentEnquiries = [], guests = [], bookingStatusChartData = [] } = useHotel();
+  const {
+    recentEnquiries = [],
+    guests = [],
+    reservations = [],
+    bookingStatusChartData = [],
+  } = useHotel();
+
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [replyText, setReplyText] = useState('');
+
+  // Dynamic Chart Filter State: 'all' | 'h1' | 'h2'
+  const [chartTimeRange, setChartTimeRange] = useState('all');
 
   const sampleMessages = [
     {
@@ -44,6 +53,7 @@ export const MiddleSection = () => {
     },
   ];
 
+  // Dynamic Enquiries mapping actual registered guest profiles from HotelContext
   const enquiriesList = (guests && guests.length > 0 ? guests.slice(0, 6) : recentEnquiries).map((g, idx) => {
     const tags = [
       { tag: 'BOOKINGS', tagColor: '#1E2B37' },
@@ -57,9 +67,10 @@ export const MiddleSection = () => {
     const msgInfo = sampleMessages[idx % sampleMessages.length];
     return {
       id: g.id || idx + 1,
+      guestId: g.id,
       name: g.fullName || g.name || 'Hotel Guest',
       email: g.email || 'guest@x.dummyjson.com',
-      mobile: g.mobile || '+1 555 019 9999',
+      mobile: g.mobile || g.phone || '+1 555 019 9999',
       avatar: g.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
       tag: g.tag || tagInfo.tag,
       tagColor: g.tagColor || tagInfo.tagColor,
@@ -68,6 +79,50 @@ export const MiddleSection = () => {
       time: msgInfo.time,
     };
   });
+
+  // Dynamically calculate chart data & totals based on system state
+  const dynamicChartData = useMemo(() => {
+    let baseData =
+      bookingStatusChartData && bookingStatusChartData.length > 0
+        ? bookingStatusChartData.map((item) => ({
+            ...item,
+            Bookings: item.month === 'Sep' ? item.Bookings + (reservations.length || 0) : item.Bookings,
+            Enquiries: item.month === 'Sep' ? item.Enquiries + (guests.length || 0) : item.Enquiries,
+          }))
+        : [
+            { month: 'Jan', Bookings: 25, Enquiries: 35 },
+            { month: 'Feb', Bookings: 45, Enquiries: 65 },
+            { month: 'Mar', Bookings: 75, Enquiries: 45 },
+            { month: 'Apr', Bookings: 35, Enquiries: 55 },
+            { month: 'May', Bookings: 85, Enquiries: 80 },
+            { month: 'Jun', Bookings: 55, Enquiries: 40 },
+            { month: 'Jul', Bookings: 95, Enquiries: 65 },
+            { month: 'Aug', Bookings: 65, Enquiries: 85 },
+            { month: 'Sep', Bookings: 40 + (reservations.length || 0), Enquiries: 50 + (guests.length || 0) },
+            { month: 'Oct', Bookings: 80, Enquiries: 60 },
+          ];
+
+    if (chartTimeRange === 'h1') {
+      baseData = baseData.slice(0, 5); // Jan - May
+    } else if (chartTimeRange === 'h2') {
+      baseData = baseData.slice(5); // Jun - Oct
+    }
+
+    return baseData;
+  }, [bookingStatusChartData, reservations, guests, chartTimeRange]);
+
+  // Compute Dynamic Metrics for Indicators & Legend
+  const totalBookingsDynamic = useMemo(() => {
+    return dynamicChartData.reduce((sum, item) => sum + (Number(item.Bookings) || 0), 0);
+  }, [dynamicChartData]);
+
+  const totalEnquiriesDynamic = useMemo(() => {
+    return dynamicChartData.reduce((sum, item) => sum + (Number(item.Enquiries) || 0), 0);
+  }, [dynamicChartData]);
+
+  const combinedTotal = totalBookingsDynamic + totalEnquiriesDynamic || 1;
+  const bookingsPercent = Math.round((totalBookingsDynamic / combinedTotal) * 100);
+  const enquiriesPercent = 100 - bookingsPercent;
 
   const handleSendReply = (e) => {
     e.preventDefault();
@@ -91,7 +146,7 @@ export const MiddleSection = () => {
             <p className="text-[10px] text-slate-400 font-medium">Guest messages & booking requests</p>
           </div>
           <Link
-            to="/communication"
+            to="/guests"
             className="text-[10px] font-bold text-[#C5A059] hover:underline flex items-center space-x-0.5"
           >
             <span>View All</span>
@@ -134,34 +189,44 @@ export const MiddleSection = () => {
         </div>
       </div>
 
-      {/* 2. Booking Status Area Chart Card (7 cols) - Compact & Sleek */}
+      {/* 2. Booking Status Area Chart Card (7 cols) - Dynamic Area Chart & Dynamic Metrics */}
       <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-3">
-        {/* Header Bar with Filter */}
+        {/* Header Bar with Time Range Filter Dropdown */}
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <h3 className="font-['Poppins'] text-sm font-bold text-[#1E2B37]">Booking Status</h3>
             <p className="text-[10px] text-slate-400 font-medium">Monthly booking vs enquiry comparison</p>
           </div>
-          <button className="flex items-center space-x-1 text-[10px] font-bold text-[#1E2B37] bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full border border-slate-200 transition-colors cursor-pointer">
-            <span>Jan - Oct</span>
-            <ChevronDown className="w-3 h-3 text-slate-500" />
-          </button>
+          
+          <select
+            value={chartTimeRange}
+            onChange={(e) => setChartTimeRange(e.target.value)}
+            className="text-[10px] font-bold text-[#1E2B37] bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-full border border-slate-200 focus:outline-none cursor-pointer"
+          >
+            <option value="all">Jan - Oct (All Months)</option>
+            <option value="h1">Jan - May (First Half)</option>
+            <option value="h2">Jun - Oct (Second Half)</option>
+          </select>
         </div>
 
-        {/* Quick Performance Indicators */}
+        {/* Quick Dynamic Performance Indicators */}
         <div className="flex items-center space-x-6 px-1">
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded bg-[#C5A059] shrink-0" />
             <div>
               <span className="text-[10px] text-slate-400 font-semibold block leading-tight">Total Bookings</span>
-              <span className="font-['Poppins'] text-xs font-extrabold text-[#1E2B37]">580</span>
+              <span className="font-['Poppins'] text-xs font-extrabold text-[#1E2B37] font-mono">
+                {totalBookingsDynamic.toLocaleString()}
+              </span>
             </div>
           </div>
           <div className="flex items-center space-x-2 border-l border-slate-200 pl-6">
             <span className="w-2.5 h-2.5 rounded bg-[#1E2B37] shrink-0" />
             <div>
               <span className="text-[10px] text-slate-400 font-semibold block leading-tight">Total Enquiries</span>
-              <span className="font-['Poppins'] text-xs font-extrabold text-[#1E2B37]">510</span>
+              <span className="font-['Poppins'] text-xs font-extrabold text-[#1E2B37] font-mono">
+                {totalEnquiriesDynamic.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -169,7 +234,7 @@ export const MiddleSection = () => {
         {/* Compact Multi-Area Chart */}
         <div className="h-44 w-full pt-1">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={bookingStatusChartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+            <AreaChart data={dynamicChartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
               <defs>
                 <linearGradient id="grandHorizonGoldGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#C5A059" stopOpacity={0.85} />
@@ -198,15 +263,15 @@ export const MiddleSection = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Compact Legend Footer */}
+        {/* Dynamic Percentage Legend Footer */}
         <div className="flex items-center justify-center space-x-6 text-[11px] text-slate-500 pt-1.5 border-t border-slate-100">
           <div className="flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded bg-[#C5A059]" />
-            <span className="font-semibold text-slate-700">Bookings (53%)</span>
+            <span className="font-semibold text-slate-700">Bookings ({bookingsPercent}%)</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded bg-[#1E2B37]" />
-            <span className="font-semibold text-slate-700">Enquiries (47%)</span>
+            <span className="font-semibold text-slate-700">Enquiries ({enquiriesPercent}%)</span>
           </div>
         </div>
       </div>
@@ -242,10 +307,24 @@ export const MiddleSection = () => {
                 <img
                   src={selectedEnquiry.avatar}
                   alt={selectedEnquiry.name}
-                  className="w-11 h-11 rounded-full object-cover border-2 border-[#C5A059] shrink-0 shadow-2xs"
+                  onClick={() => {
+                    if (selectedEnquiry.guestId) {
+                      setSelectedEnquiry(null);
+                      navigate(`/guests/${selectedEnquiry.guestId}`);
+                    }
+                  }}
+                  className="w-11 h-11 rounded-full object-cover border-2 border-[#C5A059] shrink-0 shadow-2xs cursor-pointer"
                 />
                 <div className="min-w-0">
-                  <h4 className="font-['Poppins'] text-sm font-extrabold text-[#1E2B37]">
+                  <h4
+                    onClick={() => {
+                      if (selectedEnquiry.guestId) {
+                        setSelectedEnquiry(null);
+                        navigate(`/guests/${selectedEnquiry.guestId}`);
+                      }
+                    }}
+                    className="font-['Poppins'] text-sm font-extrabold text-[#1E2B37] hover:text-[#C5A059] hover:underline cursor-pointer"
+                  >
                     {selectedEnquiry.name}
                   </h4>
                   <p className="text-xs text-slate-500 font-mono truncate">

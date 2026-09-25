@@ -24,6 +24,8 @@ import { BookingHistoryPage } from './pages/modules/BookingHistoryPage';
 import { MaintenancePage } from './pages/modules/MaintenancePage';
 import { PaymentsPage } from './pages/modules/PaymentsPage';
 import { InvoiceDetailsPage } from './pages/modules/InvoiceDetailsPage';
+import { ReportsPage } from './pages/modules/ReportsPage';
+import { SettingsPage } from './pages/modules/SettingsPage';
 
 // Common Minimal Placeholder Page for Remaining Sub-Pages
 import { ModulePlaceholderPage } from './pages/common/ModulePlaceholderPage';
@@ -233,7 +235,7 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="Analytics & Reports" moduleNumber="10" description="Business intelligence, revenue charts, and occupancy rate." />
+              <ReportsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -244,7 +246,7 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <ModulePlaceholderPage title="System Settings" moduleNumber="11" description="Property configuration, tax rates, and policies." />
+              <SettingsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

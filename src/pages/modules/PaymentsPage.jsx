@@ -490,7 +490,7 @@ export const PaymentsPage = () => {
                       </button>
                       <button
                         onClick={() => setEditingPayment({ ...p })}
-                        className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-amber-800 hover:bg-amber-50 transition-colors cursor-pointer"
                         title="Edit Payment Record"
                       >
                         <Edit className="w-3.5 h-3.5" />
@@ -931,7 +931,7 @@ export const PaymentsPage = () => {
           <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <Edit className="w-5 h-5 text-blue-600" />
+                <Edit className="w-5 h-5 text-amber-800" />
                 <h3 className="font-['Poppins'] text-lg font-extrabold text-[#1E2B37]">
                   Edit Payment Record ({editingPayment.id})
                 </h3>
@@ -1033,7 +1033,7 @@ export const PaymentsPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[#8C6239] hover:bg-[#734f2d] text-white font-bold cursor-pointer shadow-xs"
                 >
                   Update Payment
                 </button>

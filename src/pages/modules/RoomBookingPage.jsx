@@ -666,6 +666,22 @@ export const RoomBookingPage = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </button>
+
+                            <button
+                              onClick={() => setEditingRes({ ...res })}
+                              className="p-1.5 text-slate-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors inline-flex items-center"
+                              title="Edit Reservation"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setConfirmDeleteRes(res)}
+                              className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors inline-flex items-center"
+                              title="Delete Reservation"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -768,6 +784,20 @@ export const RoomBookingPage = () => {
                             <span>Check-Out</span>
                           </button>
                         )}
+                        <button
+                          onClick={() => setEditingRes({ ...res })}
+                          className="p-1.5 text-slate-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors inline-flex items-center"
+                          title="Edit Reservation"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteRes(res)}
+                          className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors inline-flex items-center"
+                          title="Delete Reservation"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1590,6 +1620,201 @@ export const RoomBookingPage = () => {
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Confirm Check-Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Reservation Modal */}
+      {editingRes && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <Edit className="w-5 h-5 text-amber-800" />
+                <h3 className="font-['Poppins'] text-lg font-extrabold text-[#1E2B37]">
+                  Edit Reservation ({editingRes.id})
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingRes(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateReservation(editingRes);
+                setEditingRes(null);
+                toast.success(`Updated reservation ${editingRes.id} for ${editingRes.guestName}!`);
+              }}
+              className="space-y-3 text-xs"
+            >
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Guest Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editingRes.guestName}
+                  onChange={(e) => setEditingRes({ ...editingRes, guestName: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-semibold focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editingRes.guestEmail || ''}
+                    onChange={(e) => setEditingRes({ ...editingRes, guestEmail: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={editingRes.guestPhone || ''}
+                    onChange={(e) => setEditingRes({ ...editingRes, guestPhone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Room #</label>
+                  <input
+                    type="text"
+                    value={editingRes.roomNumber}
+                    onChange={(e) => setEditingRes({ ...editingRes, roomNumber: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-mono font-bold focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Total Amount ($)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editingRes.totalAmount}
+                    onChange={(e) => setEditingRes({ ...editingRes, totalAmount: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-mono font-bold focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Check-In Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={editingRes.checkIn}
+                    onChange={(e) => setEditingRes({ ...editingRes, checkIn: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-mono focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Check-Out Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={editingRes.checkOut}
+                    onChange={(e) => setEditingRes({ ...editingRes, checkOut: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#1E2B37] font-mono focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Payment Status</label>
+                  <select
+                    value={editingRes.paymentStatus}
+                    onChange={(e) => setEditingRes({ ...editingRes, paymentStatus: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-[#C5A059] text-emerald-600"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Refunded">Refunded</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Booking Status</label>
+                  <select
+                    value={editingRes.status}
+                    onChange={(e) => setEditingRes({ ...editingRes, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:border-[#C5A059] text-slate-800"
+                  >
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Checked-In">Checked-In</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingRes(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#8C6239] hover:bg-[#734f2d] text-white font-bold cursor-pointer shadow-xs"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Reservation Confirmation Modal */}
+      {confirmDeleteRes && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center space-x-3 text-rose-600">
+              <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-['Poppins'] text-lg font-extrabold text-[#1E2B37]">Delete Reservation?</h3>
+                <p className="text-xs text-slate-400 font-mono">Ref: {confirmDeleteRes.id}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+              Are you sure you want to delete reservation <strong className="text-[#1E2B37]">{confirmDeleteRes.id}</strong> for <strong className="text-[#1E2B37]">{confirmDeleteRes.guestName}</strong>? Room <strong className="text-[#1E2B37]">{confirmDeleteRes.roomNumber}</strong> will immediately be released to Available status.
+            </p>
+
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteRes(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 cursor-pointer text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteReservation(confirmDeleteRes.id);
+                  setConfirmDeleteRes(null);
+                }}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-xs"
+              >
+                Yes, Delete Reservation
               </button>
             </div>
           </div>

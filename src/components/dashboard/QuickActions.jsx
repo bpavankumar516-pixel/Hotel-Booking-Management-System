@@ -48,11 +48,11 @@ export const QuickActions = () => {
     },
     {
       id: 'payments',
-      label: 'Guest Directory',
+      label: 'Record Payment',
       icon: CreditCard,
       badgeColor: 'bg-slate-800 text-white',
       hoverBorder: 'hover:border-slate-800 hover:bg-slate-100',
-      onClick: () => navigate('/guests'),
+      onClick: () => navigate('/payments'),
     },
   ];
 

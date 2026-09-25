@@ -1,9 +1,11 @@
 import React from 'react';
 import { useHotel } from '../../contexts/HotelContext';
+import { useNavigate } from 'react-router-dom';
 import { BedDouble, ShoppingBag, DoorClosed, HelpCircle, CreditCard } from 'lucide-react';
 
 export const StatCards = () => {
   const { metrics } = useHotel();
+  const navigate = useNavigate();
 
   const cards = [
     {
@@ -11,30 +13,35 @@ export const StatCards = () => {
       title: 'Available Rooms',
       value: String(metrics.availableRooms || 35).padStart(2, '0'),
       icon: BedDouble,
+      route: '/rooms',
     },
     {
       id: 2,
       title: 'Today Checkout',
       value: String(metrics.todayCheckout || 8).padStart(2, '0'),
       icon: ShoppingBag,
+      route: '/reservations',
     },
     {
       id: 3,
       title: 'Cancellations',
       value: String(metrics.cancellations || 12).padStart(2, '0'),
       icon: DoorClosed,
+      route: '/reservations',
     },
     {
       id: 4,
       title: 'Enquiries',
       value: String(metrics.enquiries || 82).padStart(2, '0'),
       icon: HelpCircle,
+      route: '/guests',
     },
     {
       id: 5,
       title: 'Pending Payments',
       value: String(metrics.pendingPayments || 7).padStart(2, '0'),
       icon: CreditCard,
+      route: '/payments',
     },
   ];
 
@@ -45,7 +52,8 @@ export const StatCards = () => {
         return (
           <div
             key={c.id}
-            className="bg-white rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden relative group hover:shadow-md transition-shadow"
+            onClick={() => navigate(c.route)}
+            className="bg-white rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden relative group hover:shadow-md transition-all cursor-pointer"
           >
             {/* Upper Content */}
             <div className="p-4 flex items-start justify-between">
@@ -60,9 +68,9 @@ export const StatCards = () => {
               </div>
             </div>
 
-            {/* Bottom VIEW DETAILS Banner matching reference image */}
+            {/* Bottom VIEW DETAILS Banner */}
             <div className="bg-gradient-to-t from-[#F7F2E7] to-white border-t border-amber-100/60 px-4 py-2 flex items-center justify-center">
-              <span className="text-[10px] font-bold text-[#8C6D2D] uppercase tracking-wider group-hover:underline cursor-pointer">
+              <span className="text-[10px] font-bold text-[#8C6D2D] uppercase tracking-wider group-hover:underline">
                 VIEW DETAILS
               </span>
             </div>
@@ -72,3 +80,4 @@ export const StatCards = () => {
     </div>
   );
 };
+
